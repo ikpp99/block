@@ -24,7 +24,6 @@ public class idx
             String[] ss = s.split(","); int pss=0;
             for( String t: ss ){
                 if( pss < DIM ){
-                    t = t.trim();
                     if( !t.isEmpty()){
                                                         int mm=pss*2, m=0, pt=0; long val=0;
                         while( pt<t.length() && m<2 ){
@@ -50,7 +49,7 @@ public class idx
         }
     }
     
-/* DBG:  1 pars ~ 500 ns.   
+///* DBG:  1 pars ~ 500 ns.   
     public static void main( String[] args )
     {
         idx t=new idx( new long[]{  23,-1,   34,55,   1,-1  }); tar( t );
@@ -62,8 +61,8 @@ public class idx
         
         long t0=System.nanoTime(); int nn=1000000;
         for( int n=0;n<nn;n++){
-            s="1,2,3,,:88";                      t = new idx( s );
-            s="77,:33, 99:*, 2345:99, *, 55: ";  t = new idx( s );;
+            s=" 1 , 2 , 3 ,, : 88 ";                      t = new idx( s );
+            s=" 77 , : 33 , 99 : * , 2345 : 99 , * , 55 : ";  t = new idx( s );;
         }
         t0 = System.nanoTime() - t0;
         tt(""); tt(nn+":  dt = "+t0+" ns,  t2 = "+t0/nn+" ns");
