@@ -42,6 +42,7 @@ public class LongMem
                     case LONG  : buf.asLongBuffer()  .put( (  long[]) arr, parr, len ); break;
                     case FLOAT : buf.asFloatBuffer() .put( ( float[]) arr, parr, len ); break;
                     case DOUBLE: buf.asDoubleBuffer().put( (double[]) arr, parr, len );
+                    default:
                 }
             } else {
                 switch( typ ){
@@ -50,13 +51,22 @@ public class LongMem
                     case LONG  : buf.asLongBuffer()  .get( (  long[]) arr, parr, len ); break;
                     case FLOAT : buf.asFloatBuffer() .get( ( float[]) arr, parr, len ); break;
                     case DOUBLE: buf.asDoubleBuffer().get( (double[]) arr, parr, len );
+                    default:
                 }
             }
         }    
     }
+
     
-    public void copyArr( long pmem, Object arr, int parr, int len, type typ, boolean put ) throws Exception
+    public void copyArr( long pmem, Object arr, int parr, int len, boolean put ) throws Exception
     {
+                                      type typ = type.SHORT; 
+        if(      arr instanceof   byte[] ) typ = type.BYTE;
+        else if( arr instanceof   long[] ) typ = type.LONG;
+        else if( arr instanceof    int[] ) typ = type.INT;
+        else if( arr instanceof double[] ) typ = type.DOUBLE;
+        else if( arr instanceof  float[] ) typ = type.FLOAT;
+
         int  nb = typ.getNb();
         long arlen = len*nb , x = pmem+arlen;
         if(  x > memLen ) throw new Exception("LongMem < "+pmem+"+"+arlen+" = "+x );
@@ -83,15 +93,15 @@ public class LongMem
         double[] dd = new double[ NN ]; for(int i=0;i<NN;i++) dd[i]=i;
         double[] rr = new double[ dd.length ]; 
         
-        mem.copyArr( 48, dd, 2, NN-2, type.DOUBLE, true );
-        mem.copyArr( 48, rr, 0, NN, type.DOUBLE, false );
+        mem.copyArr( 48, dd, 2, NN-2, true );
+        mem.copyArr( 48, rr, 0, NN,  false );
         String s="[]: "; for( double q: rr ) s+=q+", ";  tt( s );
         
         long[] ddd = new long[ NN ]; for(int i=0;i<NN;i++) ddd[i]=i;
         long[] rrr = new long[ ddd.length ]; 
         
-        mem.copyArr( 48, ddd, 2, NN-2, type.LONG, true );
-        mem.copyArr( 48, rrr, 0, NN, type.LONG, false );
+        mem.copyArr( 48, ddd, 2, NN-2, true );
+        mem.copyArr( 48, rrr, 0, NN,  false );
         s="[]: "; for( long q: rrr ) s+=q+", ";  tt( s );
     }
     static void tt(String x){System.out.println( x );}

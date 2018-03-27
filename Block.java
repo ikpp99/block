@@ -1,5 +1,7 @@
 package com.pik.xmem;
 
+import java.nio.ByteBuffer;
+import java.nio.LongBuffer;
 import java.util.Arrays;
 
 public class Block
@@ -40,19 +42,19 @@ public class Block
     public void readBlockHeader( LongMem mem, long loc ) throws Exception{ if( loc%8 !=0 ) throw new Exception("BAD mem Loc8: "+loc);
     
         long[] hhl = { 0, 0 };
-        mem.copyArr( loc, hhl, 0, 2, type.LONG, false );
+        mem.copyArr( loc, hhl, 0, 2, false );
 
         len = hhl[ 0 ];
         off = (int)(  hhl[ 1 ]         & 0xFFFFFFFF );
         typ = (int)(( hhl[ 1 ] >> 32 ) & 0xFFFF );
         dim = (int)(( hhl[ 1 ] >> 48 ) & 0xFFFF );
         siz = new long[ dim ];
-        mem.copyArr( loc+16, siz, 0, dim, type.LONG, false );
+        mem.copyArr( loc+16, siz, 0, dim, false );
         
         int d0 = 8*( dim+2 ), lex = off-d0;
         if( lex > 0 ){
             ext = new byte[ lex ];
-            mem.copyArr( loc+d0, ext, 0, lex, type.BYTE, false ); 
+            mem.copyArr( loc+d0, ext, 0, lex, false ); 
         }
         else ext = null;    
     }
@@ -63,16 +65,15 @@ public class Block
         long[] hhl = new long[ dim2 ];
         hhl[0] = len;                                     //? (len >> 3) << 16 + 0xFFFE;
         hhl[1] = dim;
-        hhl[1] = ( hhl[1] << 16 + typ ) << 32 + off;
-tt("0: "+hhl[0]+", 1: "+Long.hhl[1]);        
+        hhl[1] = (((hhl[1] << 16) + typ ) << 32) + off;
         System.arraycopy( siz, 0, hhl, 2, dim );
         
-        mem.copyArr( loc, hhl, 0, dim2, type.LONG, true );
+        mem.copyArr( loc, hhl, 0, dim2, true );
         
-        if( ext !=null ) mem.copyArr( loc + 8*dim2, ext, 0, ext.length, type.BYTE, true );
+        if( ext !=null ) mem.copyArr( loc + 8*dim2, ext, 0, ext.length, true );
     }
     public String toString(){
-        String s="Block: len="+len+", off="+off+", typ="+typ+"( "+type.val( typ )+"), dim="+dim+": ";
+        String s="Block: len="+len+", off="+off+", typ="+typ+"("+type.val( typ )+"), dim="+dim+": ";
         try{ for( long ind: siz ) s+=ind+", ";}catch(Exception e){}
         return s;
     }
@@ -82,22 +83,27 @@ tt("0: "+hhl[0]+", 1: "+Long.hhl[1]);
     {
         LongMem mem = new LongMem( 128 );
         
-        Block t = new Block("test", type.LONG, new long[]{2,3,4,5}, new byte[]{1,2,3,4,5,6,7} );
+        Block t = new Block("test", type.LONG, new long[]{2,3}, new byte[]{1,2,3,4,5,6,7} );
         
         t.writeBlockHeader( mem, 0 );
-        mem.copyArr( 56, new byte[]{-1,-2,-3}, 0, 3, type.BYTE, true );
-dumpMem( mem );
+        mem.copyArr( 40, new long[]{1,2,3,4,5,6}, 0, 6, true );
+        dumpMem( mem );
         
         Block q = new Block( "qqqq" );
         q.readBlockHeader(  mem, 0 );
-        tt( ""+q );
+        tt(""+q );
     }
     static void dumpMem( LongMem mm ){
-        String s="### LongMem:";
+        String s="### LongMem:"; String dec="dec: ";
         for( byte[] bb: mm.mem ){
             s+="\n"; for(byte b: bb ) s+=" "+(int)b;
+            ByteBuffer bbu = ByteBuffer.wrap( bb );
+            LongBuffer bbl =bbu.asLongBuffer();
+            s+="\nhex: "; 
+            int x=bb.length/8;
+            for( int i=0;i<x;i++){ s+=" "+Long.toHexString( bbl.get( i )); dec+=" "+bbl.get( i );}
         }
-        tt(s);tt("");
+        tt(s); tt(dec); tt("");
     }
     static void tt(String x){System.out.println( x );}
 //*/    
