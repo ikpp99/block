@@ -57,16 +57,18 @@ public class LongMem
         }    
     }
 
-    
+    public void copyArr( long pmem, Object arr, boolean put ) throws Exception { copyArr( pmem, arr, -1, -1, put );}
+
     public void copyArr( long pmem, Object arr, int parr, int len, boolean put ) throws Exception
     {
-                                      type typ = type.SHORT; 
-        if(      arr instanceof   byte[] ) typ = type.BYTE;
-        else if( arr instanceof   long[] ) typ = type.LONG;
-        else if( arr instanceof    int[] ) typ = type.INT;
-        else if( arr instanceof double[] ) typ = type.DOUBLE;
-        else if( arr instanceof  float[] ) typ = type.FLOAT;
-
+                                       type typ = null;    
+        if(      arr instanceof   byte[] ){ typ = type.BYTE;  if(parr<0) len = ((  byte[]) arr ).length;}
+        else if( arr instanceof   long[] ){ typ = type.LONG;  if(parr<0) len = ((  long[]) arr ).length;}
+        else if( arr instanceof    int[] ){ typ = type.INT;   if(parr<0) len = ((   int[]) arr ).length;}
+        else if( arr instanceof double[] ){ typ = type.DOUBLE;if(parr<0) len = ((double[]) arr ).length;}
+        else if( arr instanceof  float[] ){ typ = type.FLOAT; if(parr<0) len = (( float[]) arr ).length;}
+        else if( arr instanceof  short[] ){ typ = type.SHORT; if(parr<0) len = (( short[]) arr ).length;}
+                                                              if(parr<0) parr=0;
         int  nb = typ.getNb();
         long arlen = len*nb , x = pmem+arlen;
         if(  x > memLen ) throw new Exception("LongMem < "+pmem+"+"+arlen+" = "+x );
@@ -94,14 +96,14 @@ public class LongMem
         double[] rr = new double[ dd.length ]; 
         
         mem.copyArr( 48, dd, 2, NN-2, true );
-        mem.copyArr( 48, rr, 0, NN,  false );
+        mem.copyArr( 48, rr,         false );
         String s="[]: "; for( double q: rr ) s+=q+", ";  tt( s );
         
         long[] ddd = new long[ NN ]; for(int i=0;i<NN;i++) ddd[i]=i;
         long[] rrr = new long[ ddd.length ]; 
         
         mem.copyArr( 48, ddd, 2, NN-2, true );
-        mem.copyArr( 48, rrr, 0, NN,  false );
+        mem.copyArr( 48, rrr,         false );
         s="[]: "; for( long q: rrr ) s+=q+", ";  tt( s );
     }
     static void tt(String x){System.out.println( x );}

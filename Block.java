@@ -8,13 +8,12 @@ public class Block
 {
     protected String nam;
     protected long len;
-    protected int dim, typ, off;
+    protected int dim, typ, off, extLen;
     protected long[] siz;
-    protected byte[] ext;
     
     public Block( String name ){ nam = name;}
     
-    public Block( String name, type type, long[] size, byte[] extbytes )
+    public Block( String name, type type, long[] size, int extByteLen )
     {
         this( name );
         dim = size.length;
@@ -23,44 +22,57 @@ public class Block
         typ= type.ordinal();
         len = type.getNb(); for( long d: siz ) len *=d;
 
-        int extlen = 0;
-        if( extbytes !=null ){
-            extlen = 8*(( extbytes.length+7 )/8);
-            ext = Arrays.copyOf( extbytes, extlen );
-        }
-        else ext=null;
-        
-        off  = 8*( 2 + dim ) + extlen;
-        len += off;
+        off  = 8*( 2 + dim );
+        extLen = extByteLen>0? extByteLen: 0;
+        off   += extLen;
+        len   += off;
     }
 
-    public Block( String name, type type, long[] size ){ this( name, type, size, null );} 
+    public Block( String name, type type, long[] size ){ this( name, type, size, 0 );} 
         
-    public Block( type type, long[] size ){ this( "def"+(seq++), type, size, null );} 
+    public Block( type type, long[] size ){ this( "def"+(seq++), type, size, 0 );} 
     private static int seq=0;
+
+    public byte[] readExt( LongMem mem, long loc ) throws Exception
+    {
+        isLoc( loc );
+        byte[] ext = null;
+        if( extLen >0 ){
+            ext = new byte[ extLen ];
+            mem.copyArr( loc+8*(2+dim), ext, false ); 
+        }
+        return ext;
+    }
     
-    public void readBlockHeader( LongMem mem, long loc ) throws Exception{ if( loc%8 !=0 ) throw new Exception("BAD mem Loc8: "+loc);
+    public void writeExt( LongMem mem, long loc, byte[] ext ) throws Exception
+    {
+        if( ext !=null ){
+            isLoc( loc );
+            int xx = Math.min( extLen , ext.length );
+            if( xx >0 ) mem.copyArr( loc+8*(2+dim), ext, 0, xx, true );
+        }
+    }
     
+    public void readBlockHeader( LongMem mem, long loc ) throws Exception
+    {
+        isLoc( loc );
         long[] hhl = { 0, 0 };
-        mem.copyArr( loc, hhl, 0, 2, false );
+        mem.copyArr( loc, hhl, false );
 
         len = hhl[ 0 ];
         off = (int)(  hhl[ 1 ]         & 0xFFFFFFFF );
         typ = (int)(( hhl[ 1 ] >> 32 ) & 0xFFFF );
         dim = (int)(( hhl[ 1 ] >> 48 ) & 0xFFFF );
         siz = new long[ dim ];
-        mem.copyArr( loc+16, siz, 0, dim, false );
+        mem.copyArr( loc+16, siz, false );
         
-        int d0 = 8*( dim+2 ), lex = off-d0;
-        if( lex > 0 ){
-            ext = new byte[ lex ];
-            mem.copyArr( loc+d0, ext, 0, lex, false ); 
-        }
-        else ext = null;    
+        int d0 = 8*( 2+dim ), lex = off-d0;
+        extLen = lex>0? lex: 0;
     }
     
-    public void writeBlockHeader( LongMem mem, long loc ) throws Exception{ if( loc%8 !=0 ) throw new Exception("BAD mem Loc8: "+loc);
-    
+    public void writeBlockHeader( LongMem mem, long loc ) throws Exception
+    {
+        isLoc( loc );
         int dim2 = 2+dim;                                 //standard siz of header( NO ext )
         long[] hhl = new long[ dim2 ];
         hhl[0] = len;                                     //? (len >> 3) << 16 + 0xFFFE;
@@ -68,25 +80,28 @@ public class Block
         hhl[1] = (((hhl[1] << 16) + typ ) << 32) + off;
         System.arraycopy( siz, 0, hhl, 2, dim );
         
-        mem.copyArr( loc, hhl, 0, dim2, true );
-        
-        if( ext !=null ) mem.copyArr( loc + 8*dim2, ext, 0, ext.length, true );
-    }
-    public String toString(){
-        String s="Block: len="+len+", off="+off+", typ="+typ+"("+type.val( typ )+"), dim="+dim+": ";
-        try{ for( long ind: siz ) s+=ind+", ";}catch(Exception e){}
-        return s;
+        mem.copyArr( loc, hhl, true );
     }
     
-///* DBG:   
+    public String toString()
+    {
+        String s="Block '"+nam+"': "+type.val( typ )+"[ ";
+        try{ for( long ind: siz ) s+=ind+", ";}catch(Exception e){}
+        return s.substring( 0, s.length()-2 )+" ], len="+len+", off="+off;
+    }
+    
+    public void isLoc( long loc ) throws Exception{ if( loc%8 !=0 ) throw new Exception("BAD mem Loc8: "+loc);}
+    
+///* DBG: =====================================================================================================
+    
     public static void main( String[] args ) throws Exception
     {
         LongMem mem = new LongMem( 128 );
         
-        Block t = new Block("test", type.LONG, new long[]{2,3}, new byte[]{1,2,3,4,5,6,7} );
-        
+        Block t = new Block("test", type.LONG, new long[]{2,3}, 8 ); 
         t.writeBlockHeader( mem, 0 );
-        mem.copyArr( 40, new long[]{1,2,3,4,5,6}, 0, 6, true );
+        
+        mem.copyArr( 40, new long[]{1,2,3,4,5,6}, true );
         dumpMem( mem );
         
         Block q = new Block( "qqqq" );
