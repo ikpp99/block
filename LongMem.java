@@ -2,14 +2,19 @@ package com.pik.xmem;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.TreeMap;
 
 public class LongMem
 {
-    protected static int MM = 128;  // 1024*1024*512 = 0.5 GB // length of byte[] arrs. 
+    static protected  int MM = 128;  // 1024*1024*512 = 0.5 GB // length of byte[] arrs. 
     protected long memLen;
     protected ArrayList< byte[] > mem;
     
-    public LongMem( long len )  throws Exception { this( len, MM );} 
+    protected HashMap< String, Long > blockNamLoc; 
+    protected TreeMap<   Long, Long > freeLocLen;
+    
+    public LongMem( long len ) throws Exception { this( len, MM );} 
     
     protected LongMem( long len, int bufMM ) throws Exception 
     {
@@ -24,6 +29,8 @@ public class LongMem
             s+=n;
         }
         memLen = len;
+        freeLocLen = new TreeMap<>();
+        freeLocLen.put( 0L, len );
     }
     
     private void copArr( byte[] bb, int pbb, Object arr, int parr, int len, type typ, boolean put )
