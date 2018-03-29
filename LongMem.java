@@ -7,7 +7,7 @@ import java.util.TreeMap;
 
 public class LongMem
 {
-    static protected  int MM = 128;  // 1024*1024*512 = 0.5 GB // length of byte[] arrs. 
+    static protected  int MM = 64;  // 1024*1024*512 = 0.5 GB // length of byte[] arrs. 
     protected long memLen;
     protected ArrayList< byte[] > mem;
     
@@ -96,8 +96,8 @@ public class LongMem
     public void copyLeft( long d, long s, long n )      // Left: d < s !!!
     {    
         if( d < s ){ 
-            int sss = buf( s ), ssX = buf( s+n ), sZ = off( s+n ), sx=MM, s0 = off( s ); 
-            int ddd = buf( d ), ddX = buf( d+n ), dZ = off( d+n ), dx=MM, d0 = off( d );
+            int sss = buf( s ), ssX = buf( s+n ), s0 = off( s ), sZ = off( s+n ), sx=MM; 
+            int ddd = buf( d ), ddX = buf( d+n ), d0 = off( d ), dZ = off( d+n ), dx=MM;
             long xx=0;
 
             while(  xx < n ){
@@ -107,13 +107,13 @@ public class LongMem
                 int nn = Math.min( dx-d0 , sx-s0 );
                 System.arraycopy( mem.get( sss ), s0, mem.get( ddd ), d0, nn ); 
 
-                s0+=nn; if( s0==MM ){ sss++; s0=0; sx=MM;}
-                d0+=nn; if( d0==MM ){ ddd++; d0=0; dx=MM;}
+                s0 += nn; if( s0==MM ){ sss++; s0=0; sx=MM;}
+                d0 += nn; if( d0==MM ){ ddd++; d0=0; dx=MM;}
                 xx += nn;
             }
         }
     }
-
+    
 ///* DBG:
                                                                 static final boolean PUT=true, GET=false;
     public static void main( String[] args ) throws Exception
@@ -123,19 +123,21 @@ public class LongMem
         
         long[] ddd = new long[ NN ]; for(int i=0;i<NN;i++) ddd[i]=i;
         long[] rrr = new long[ ddd.length ]; 
-        LMem.copyArr( 48, ddd, 2, NN-2, PUT );
-        LMem.copyArr( 48, rrr,          GET );
+
+        long aa=48, bb=120, cc=8;
+        LMem.copyArr( aa, ddd, 2, NN-2, PUT );
+        LMem.copyArr( aa, rrr,          GET );
         String s="[]: "; for( long q: rrr ) s+=q+", ";  tt( s );
 
         double[] dd = new double[ NN ]; for(int i=0;i<NN;i++) dd[i]=i;
         double[] rr = new double[ dd.length ]; 
         
-        LMem.copyArr( 48, dd, 2, NN-2, PUT );
-        LMem.copyArr( 48, rr,          GET );
+        LMem.copyArr( bb, dd, 2, NN-2, PUT );
+        LMem.copyArr( bb, rr,          GET );
         s="[]: "; for( double r: rr ) s+=r+", ";  tt( s );
         
-        LMem.copyLeft( 8, 48, NN*8 );
-        LMem.copyArr(  8, rr, GET  );
+        LMem.copyLeft( cc, bb, NN*8 );
+        LMem.copyArr(  cc, rr, GET  );
         s="[]: "; for( double r: rr ) s+=r+", ";  tt( s );
     }
     static void tt(String x){System.out.println( x );}

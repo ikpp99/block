@@ -6,9 +6,10 @@ import java.util.TreeMap;
 public class Block
 {
     static protected LongMem mem;
+//    static protected volatile boolean Busy=false; 
 
-    static protected LinkedHashMap< String, Long > blockNamLoc; 
-    static protected TreeMap<   Long, Long > freeLocLen;
+    static protected LinkedHashMap < String, Block > blockNamBlk; 
+    static protected TreeMap       < Long  , Long  > freeLocLen;
     static private int Seq = 0; 
     
     protected long    loc;
@@ -17,57 +18,82 @@ public class Block
     
     static public void iniBlocks( LongMem longMem )
     {
-        mem    = longMem;
+        mem = longMem;
         freeLocLen = new TreeMap<>();
         freeLocLen.put( 0L, mem.memLen );
-        blockNamLoc = new LinkedHashMap<>();
+        blockNamBlk = new LinkedHashMap<>();
     }
     
-    public static Block getBlock( String name ) throws Exception
-    {
-        Block qq=null;
-        Long pos = blockNamLoc.get( name );
-        if(  pos !=null ){
-             Head hh = new Head();
-             hh.readHead( mem, pos );
-             qq = new Block( pos, name, hh );
-        }
-        return qq;
-    }
-    private Block( long loc, String name, Head head ){ this.loc=loc; this.nam=name; this.head=head;}  
-    
+    public static Block getBlock( String name ) throws Exception { return blockNamBlk.get( name );}
+
     public  Block( type type, long[] size ) throws Exception { this("_"+(Seq++) , type, size, 0 );}
     public  Block( String name, type type, long[] size ) throws Exception { this( name, type, size, 0 );}
     public  Block( String name, type type, long[] size, int extLen ) throws Exception 
     {
         head = new Head( type, size, extLen );
-        long sum=0;  boolean done=false;
+        long sum = writeBlock( name );
+        if( sum >0 ){
+            if( sum < head.len ) throw new Exception("NO MEMORY");
+//          if(1==1)throw new Exception("NO Continuous MEMORY "+head.len);
 
-        for( Long pos: freeLocLen.keySet()){
+            while( sum >0 ){
+                concatLastHoles();
+                sum = writeBlock( name );
+            }
+        }
+    }
+
+    private long writeBlock( String name )  throws Exception
+    {
+        long sum=0;
+        for( Long pos:   freeLocLen.keySet() ){
              Long free = freeLocLen.get( pos ); sum += free; 
              if(  free >= head.len )
              {
-                if( blockNamLoc.get( name ) !=null ) throw new Exception("Block ALREADY EXISTS, "+name); 
-                 
-                head.writeHead ( mem , pos ); 
-                blockNamLoc.put( name, pos );  nam=name;  loc = pos;
+                if( blockNamBlk.get( name ) !=null ) throw new Exception("Block ALREADY EXISTS, "+name); 
+                
+                head.writeHead ( mem , pos );  nam=name;  loc = pos; 
+                blockNamBlk.put( name, this );
                 
                 freeLocLen.remove( pos ); 
                 free -= head.len;
                 if( free > 0 ) freeLocLen.put( pos+head.len, free );
-                done=true; break;
+                return 0;
              }
         }
-        if( !done ){
-            if( sum < head.len ) throw new Exception("NO MEMORY");
-            throw new Exception("NO Contigues MEMORY "+head.len);       //TODO squize...
+        return sum;
+    }
+
+    private void concatLastHoles() throws Exception {
+        Object[] keys = freeLocLen.keySet().toArray();
+        int xx = keys.length;
+        if( xx < 2 ) throw new Exception("NO MEMORY");
+        
+        Long las = (Long)keys[ xx-1 ];
+        Long lll = freeLocLen.get( las );
+        
+        Long pre = (Long)keys[ xx-2 ];
+        long ppp = freeLocLen.get( pre );
+        
+        long dat = pre+ppp;
+        long lda = las-dat; 
+        
+        mem.copyLeft( pre, dat, lda );
+        
+        freeLocLen.remove( pre );
+        freeLocLen.remove( las );
+        freeLocLen.put( pre+lda, ppp+lll );
+        
+        for( String name: blockNamBlk.keySet()){
+            Block blk = blockNamBlk.get( name );
+            if( dat <= blk.loc || blk.loc <=las ) blk.loc-=ppp;
         }
     }
 
-    public void delete() throws Exception  //TODO to be tested
+    public void delete() throws Exception
     {
         long len = head.len;
-        blockNamLoc.remove( nam );  long nex = loc + len;
+        blockNamBlk.remove( nam );  long nex = loc + len;
         for( Long free: freeLocLen.keySet()){
             if( nex == free ){
                 len += freeLocLen.get( free ); 
@@ -102,7 +128,7 @@ public class Block
     
     static public String blocks() throws Exception {
         String s="### Blocks:"; int i=0;
-        for( String name: blockNamLoc.keySet()) s+="\n    "+(++i)+".\t\t"+getBlock( name );
+        for( String name: blockNamBlk.keySet()) s+="\n    "+(++i)+".\t\t"+getBlock( name );
         s+="\n### Holes:"; i=0; long free=0;
         for( Long p: freeLocLen.keySet()){ 
             long h=freeLocLen.get( p ); free+=h;  
@@ -128,12 +154,22 @@ tt( blocks());
 
         sh5.delete();
         delete("byt3");
+//        lon2.delete();
+//        int4.delete();
+        delete("aa1");
 tt( blocks());
 
         byte[] bb=new byte[16]; mem.copyArr( 496, bb, false );
         String s="[]:";for( byte b: bb)s+=" "+b; tt( s );
 
-        Block int7 = new Block( "int4", type.INT,  new long[]{9,1,2} );
+        Block int7 = new Block( "int7", type.INT,  new long[]{9,1,2} );
+        
+        tt(""+getBlock( "_1" )); 
+        
+        mem.copyArr( 424, bb, false );
+        s="[]:";for( byte b: bb)s+=" "+b; tt( s );
+        
+tt( blocks());
     }    
     static void tt(String x){System.out.println( x );}
 //*/    
