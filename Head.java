@@ -10,11 +10,11 @@ public class Head
     protected int     dim, typ, off, exx;
     protected long[]  siz;
 
-    public Head(){ len=-1; dim=typ=off=exx=-1; siz=null;}
+    protected Head(){ len=-1; dim=typ=off=exx=-1; siz=null;}
 
-    public Head( type type, long[] size ){ this( type, size, 0 );} 
+    protected Head( type type, long[] size ){ this( type, size, 0 );} 
     
-    public Head( type type, long[] size, int extLen )
+    protected Head( type type, long[] size, int extLen )
     {
         this();
         dim = size.length;
@@ -27,7 +27,7 @@ public class Head
         len    = 8 * (( len + off + 7 )/8 );
     }
     
-    public void readHead( LongMem mem, long locMem ) throws Exception
+    protected void readHead( LongMem mem, long locMem ) throws Exception
     {
         isLoc( locMem );
         
@@ -45,18 +45,7 @@ public class Head
         exx = lex>0? lex: 0;
     }
     
-    public byte[] readExt( LongMem mem, long locMem ) throws Exception
-    {
-        isLoc( locMem );
-        byte[] ext = null;
-        if( exx >0 ){
-            ext = new byte[ exx ];
-            mem.copyArr( locMem+8*(2+dim), ext, false ); 
-        }
-        return ext;
-    }
-    
-    public void writeHead( LongMem mem, long locMem ) throws Exception
+    protected void writeHead( LongMem mem, long locMem ) throws Exception
     {
         isLoc( locMem );
         int dim2 = 2+dim;                                 //standard siz of header( NO ext )
@@ -69,23 +58,14 @@ public class Head
         mem.copyArr( locMem, hhl, true );
     }
     
-    public void writeExt( LongMem mem, long locMem, byte[] ext ) throws Exception
-    {
-        if( ext !=null ){
-            isLoc( locMem );
-            int xx = Math.min( exx , ext.length );
-            if( xx >0 ) mem.copyArr( locMem+8*(2+dim), ext, 0, xx, true );
-        }
-    }
-    
     public String toString()
     {
-        String s="Head: "+type.val( typ )+"[ ";
+        String s="head: "+type.val( typ )+"[ ";
         try{ for( long ind: siz ) s+=ind+", ";}catch(Exception e){}
-        return s.substring( 0, s.length()-2 )+" ], len="+len+", off="+off;
+        return s.substring( 0, s.length()-2 )+" ], len="+len+", off="+off+", ext="+exx;
     }
     
-    public void isLoc( long locMem ) throws Exception{
+    private void isLoc( long locMem ) throws Exception{
         if( locMem >= 0  && locMem %8 !=0 ) throw new Exception("BAD locMem: "+locMem);
     }
     

@@ -38,7 +38,7 @@ public class LongMem
         if( typ.equals( type.BYTE ))
         {
             if( put ) System.arraycopy( (byte[]) arr, parr, bb, pbb, len ); 
-            else        System.arraycopy( bb, pbb, (byte[]) arr, parr, len );        
+            else      System.arraycopy( bb, pbb, (byte[]) arr, parr, len );        
         }
         else {
                                  ByteBuffer buf = ByteBuffer.wrap( bb, pbb, len * typ.getNb() );
@@ -93,25 +93,50 @@ public class LongMem
     private int buf( long p ){ return (int)( p/MM );}
     private int off( long p ){ return (int)( p - MM*buf( p ));} 
 
-    
-///* DBG:   
+    public void copyLeft( long d, long s, long n )      // Left: d < s !!!
+    {    
+        if( d < s ){ 
+            int sss = buf( s ), ssX = buf( s+n ), sZ = off( s+n ), sx=MM, s0 = off( s ); 
+            int ddd = buf( d ), ddX = buf( d+n ), dZ = off( d+n ), dx=MM, d0 = off( d );
+            long xx=0;
+
+            while(  xx < n ){
+                if( sss==ssX ) sx=sZ;
+                if( ddd==ddX ) dx=dZ;  // dd:(d0,dx) <- ss:(s0,sx)  
+
+                int nn = Math.min( dx-d0 , sx-s0 );
+                System.arraycopy( mem.get( sss ), s0, mem.get( ddd ), d0, nn ); 
+
+                s0+=nn; if( s0==MM ){ sss++; s0=0; sx=MM;}
+                d0+=nn; if( d0==MM ){ ddd++; d0=0; dx=MM;}
+                xx += nn;
+            }
+        }
+    }
+
+///* DBG:
+                                                                static final boolean PUT=true, GET=false;
     public static void main( String[] args ) throws Exception
     {
-        int NN=1111;
-        LongMem mem = new LongMem( 12*NN ); 
-        double[] dd = new double[ NN ]; for(int i=0;i<NN;i++) dd[i]=i;
-        double[] rr = new double[ dd.length ]; 
-        
-        mem.copyArr( 48, dd, 2, NN-2, true );
-        mem.copyArr( 48, rr,         false );
-        String s="[]: "; for( double q: rr ) s+=q+", ";  tt( s );
+        int NN=1111; 
+        LongMem LMem = new LongMem( 12*NN );
         
         long[] ddd = new long[ NN ]; for(int i=0;i<NN;i++) ddd[i]=i;
         long[] rrr = new long[ ddd.length ]; 
+        LMem.copyArr( 48, ddd, 2, NN-2, PUT );
+        LMem.copyArr( 48, rrr,          GET );
+        String s="[]: "; for( long q: rrr ) s+=q+", ";  tt( s );
+
+        double[] dd = new double[ NN ]; for(int i=0;i<NN;i++) dd[i]=i;
+        double[] rr = new double[ dd.length ]; 
         
-        mem.copyArr( 48, ddd, 2, NN-2, true );
-        mem.copyArr( 48, rrr,         false );
-        s="[]: "; for( long q: rrr ) s+=q+", ";  tt( s );
+        LMem.copyArr( 48, dd, 2, NN-2, PUT );
+        LMem.copyArr( 48, rr,          GET );
+        s="[]: "; for( double r: rr ) s+=r+", ";  tt( s );
+        
+        LMem.copyLeft( 8, 48, NN*8 );
+        LMem.copyArr(  8, rr, GET  );
+        s="[]: "; for( double r: rr ) s+=r+", ";  tt( s );
     }
     static void tt(String x){System.out.println( x );}
 //*/    
