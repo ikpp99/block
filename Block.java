@@ -37,8 +37,7 @@ public class Block
 //          if(1==1)throw new Exception("NO Continuous MEMORY "+head.len);
 
             while( sum >0 ){
-                concatLastHoles();
-                sum = writeBlock( name );
+                if( head.len <= concatLastHoles() ) sum = writeBlock( name );
             }
         }
     }
@@ -64,7 +63,7 @@ public class Block
         return sum;
     }
 
-    private void concatLastHoles() throws Exception {
+    private long concatLastHoles() throws Exception {
         Object[] keys = freeLocLen.keySet().toArray();
         int xx = keys.length;
         if( xx < 2 ) throw new Exception("NO MEMORY");
@@ -76,18 +75,20 @@ public class Block
         long ppp = freeLocLen.get( pre );
         
         long dat = pre+ppp;
-        long lda = las-dat; 
+        long lda = las-dat;
+        long fre = ppp+lll;
         
         mem.copyLeft( pre, dat, lda );
         
         freeLocLen.remove( pre );
         freeLocLen.remove( las );
-        freeLocLen.put( pre+lda, ppp+lll );
+        freeLocLen.put( pre+lda, fre );
         
         for( String name: blockNamBlk.keySet()){
             Block blk = blockNamBlk.get( name );
-            if( dat <= blk.loc || blk.loc <=las ) blk.loc-=ppp;
+            if( dat <= blk.loc && blk.loc <=las ) blk.loc-=ppp;
         }
+        return fre;
     }
 
     public void delete() throws Exception
@@ -124,17 +125,47 @@ public class Block
         }
     }
     
-    public String toString(){ return "Block \""+nam+"\": loc="+loc+", "+head;}
+    public String toString(){ return "Block \""+nam+"\": "+head+", loc="+loc+", dat="+(loc+head.off);}
     
     static public String blocks() throws Exception {
-        String s="### Blocks:"; int i=0;
+        String s="\n### Blocks:"; int i=0;
         for( String name: blockNamBlk.keySet()) s+="\n    "+(++i)+".\t\t"+getBlock( name );
         s+="\n### Holes:"; i=0; long free=0;
         for( Long p: freeLocLen.keySet()){ 
             long h=freeLocLen.get( p ); free+=h;  
             s+="\n    "+(++i)+".\t\t"+p+"\t\t"+freeLocLen.get( p );
         }
-        return s+"\n-------------------------------------------------\n\t\tFree:\t\t"+free+"\n";
+        return s+"\n-------------------------------------------------\n\t\tFree:\t\t"+free;
+    }
+    
+    public void put( Object arr ) throws Exception { mem.copyArr( loc+head.off, arr, true );}
+    
+    public String ttBlock()  throws Exception {
+        String s ="### "+this +"\n";
+        int ldat = 1; for(int i=0;i<head.dim;i++) ldat *= head.siz[i];
+        type typ = type.val( head.typ );
+        
+        Object arr=null;
+        switch( typ ){
+            case BYTE:   arr = new byte  [ ldat ]; break;
+            case SHORT:  arr = new short [ ldat ]; break;
+            case INT:    arr = new int   [ ldat ]; break;
+            case LONG:   arr = new long  [ ldat ]; break;
+            case FLOAT:  arr = new float [ ldat ]; break;
+            case DOUBLE: arr = new double[ ldat ];
+        }
+        mem.copyArr( loc+head.off, arr, false );
+        for(int i=0;i<ldat;i++){
+            switch( typ ){
+                case BYTE:   s+=" "+((byte  [])arr)[i]; break;
+                case SHORT:  s+=" "+((short [])arr)[i]; break;
+                case INT:    s+=" "+((int   [])arr)[i]; break;
+                case LONG:   s+=" "+((long  [])arr)[i]; break;
+                case FLOAT:  s+=" "+((float [])arr)[i]; break;
+                case DOUBLE: s+=" "+((double[])arr)[i];
+            }
+        }
+        return s;
     }
     
 ///* DBG: =====================================================================================================
@@ -144,12 +175,12 @@ public class Block
         LongMem mem = new LongMem( 512 );
         iniBlocks( mem );
         Block aa1 = new Block( "aa1", type.DOUBLE, new long[]{2,3} ); 
-        Block lon2 = new Block( "lon2", type.LONG, new long[]{2,3,2}, 16 ); 
+        Block lon2 = new Block( "lon2", type.LONG, new long[]{2,3,2}, 16 );lon2.put(new long[]{-1,-2,-3,-4,-5,-6,-7,-8,-9,-10,-11,-12}); 
         Block byt3 = new Block( "byt3", type.BYTE, new long[]{1,12,2}, 8 );
-        Block int4 = new Block( "int4", type.INT,  new long[]{2,3,3} ); 
+        Block int4 = new Block( "int4", type.INT,  new long[]{2,3,3} ); int4.put( new int[]{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18}); 
         Block sh5 = new Block( type.SHORT, new long[]{4,2} ); 
-        Block bb6 = new Block( type.BYTE, new long[]{8,2} );
-        mem.copyArr( 496, new byte[]{-1,-2,-3,-4,-5,-6,-7,-8, 1,2,3,4,5,6,7,8},true );
+        Block bb6 = new Block( type.BYTE, new long[]{8,2} );  bb6.put( new byte[]{-1,-2,-3,-4,-5,-6,-7,-8, 1,2,3,4,5,6,7,8});
+tt("\n_______ 0: "+ bb6.ttBlock());
 tt( blocks());
 
         sh5.delete();
@@ -159,15 +190,15 @@ tt( blocks());
         delete("aa1");
 tt( blocks());
 
-        byte[] bb=new byte[16]; mem.copyArr( 496, bb, false );
-        String s="[]:";for( byte b: bb)s+=" "+b; tt( s );
+tt("\n_______ 1: "+ bb6.ttBlock());
+tt( int4.ttBlock());
+tt( lon2.ttBlock());
 
-        Block int7 = new Block( "int7", type.INT,  new long[]{9,1,2} );
+        Block int7 = new Block( "int7", type.INT,  new long[]{9,2,2} );
         
-        tt(""+getBlock( "_1" )); 
-        
-        mem.copyArr( 424, bb, false );
-        s="[]:";for( byte b: bb)s+=" "+b; tt( s );
+tt("\n_______ 2: "+ bb6.ttBlock());
+tt( int4.ttBlock());
+tt( lon2.ttBlock());
         
 tt( blocks());
     }    
