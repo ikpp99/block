@@ -7,10 +7,10 @@ import java.util.Arrays;
 public class Head
 {
     protected long    len;
-    protected int     dim, typ, off, exx;
+    protected int     dim, typ, off, exx, nb;
     protected long[]  siz;
 
-    protected Head(){ len=-1; dim=typ=off=exx=-1; siz=null;}
+    protected Head(){ len=-1; dim=typ=off=exx=nb=-1; siz=null;}
 
     protected Head( type type, long[] size ){ this( type, size, 0 );} 
     
@@ -21,7 +21,8 @@ public class Head
         siz = Arrays.copyOf( size, dim );
 
         typ = type.ordinal();
-        len = type.getNb(); for( long d: siz ) len *=d;
+        nb  = type.getNb();
+        len = nb; for( long d: siz ) len *=d;
 
         off    = 8*( 2 + dim ); exx = extLen>0? extLen: 0; off   += exx;
         len    = 8 * (( len + off + 7 )/8 );

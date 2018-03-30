@@ -6,7 +6,7 @@ import java.util.HashMap;
 public class Index
 {
     public static final int DIM=5;
-    private long[][] ii;
+    protected long[][] ii;
     
     public Index(){ 
         ii = new long[ DIM ][2];
@@ -80,6 +80,18 @@ public class Index
     }
     static private HashMap<String,Long> vars;
     
+    static public long[][] realIndex( long[][] ind, Head head ){
+        int x = ind.length;
+        while( x-->0 && ind[x][0]==1 && ind[x][1]==1 ){} x++;
+        long[][] jj = Arrays.copyOf( ind, x );
+        
+        for(int i=0; i<x; i++){
+            if( jj[i][0] == -1 ){ jj[i][1] = -1; jj[i][0] = 1; }
+            if( jj[i][1] == -1 ){ jj[i][1] = head.siz[i] - jj[i][0] + 1;}
+        }
+        return jj;
+    }
+    
 ///*==================================================================== DBG:  1 pars ~ 500 ns.
     public static void main( String[] args )
     {
@@ -98,24 +110,30 @@ public class Index
         t0 = System.nanoTime() - t0;
         tt(""); tt(nn+":  dt = "+t0+" ns,  t2 = "+t0/nn+" ns");
         
-        s="2,3,4,5,6"; Index q=new Index( s ); tar( q ); tt( s+" ### "+lar2s( new Index(s).getSize()));
-        s="4";               q=new Index( s );           tt( s+" ### "+lar2s( new Index(s).getSize()));
-        s="5,6";             q=new Index( s );           tt( s+" ### "+lar2s( new Index(s).getSize()));
-        s="4,5,6";           q=new Index( s );           tt( s+" ### "+lar2s( new Index(s).getSize()));
-        s="1,1,1,5";         q=new Index( s );           tt( s+" ### "+lar2s( new Index(s).getSize()));
+        s="2,3,4,5,6"; Index q=new Index( s ); tar( q ); tt( s+" ### "+larr2s( new Index(s).getSize()));
+        s="4";               q=new Index( s );           tt( s+" ### "+larr2s( new Index(s).getSize()));
+        s="5,6";             q=new Index( s );           tt( s+" ### "+larr2s( new Index(s).getSize()));
+        s="4,5,6";           q=new Index( s );           tt( s+" ### "+larr2s( new Index(s).getSize()));
+        s="1,1,1,5";         q=new Index( s );           tt( s+" ### "+larr2s( new Index(s).getSize()));
         
         var("MM", 77777 );
         var("NN = 9999999 " );              tt("");
         s="77, :MM, NN:*, MM:NN, *, 55: ";  tst( s );
+        
+        Head hh = new Head( type.INT, new long[]{300,200,100} );  tt(""); tt(""+hh);
+        long[][] relInd = realIndex( new long[][]{{9,5},{9,-1},{-1,1}}, hh ); tii( relInd ); tt("");
+        
+        relInd = realIndex( new long[][]{{-1,1}}, hh ); tii( relInd );
     }
 
     static void tst( String s ){ tt( "### Str|"+s+"|" ); Index t=new Index(s); tar( t );}
-    static void tar( Index t ){
+    static void tar( Index t ){ tii( t.ii );}
+    static void tii( long[][] jj ){
         String q="index[][]:"; 
-        for( int i=0; i<t.ii.length;i++) q+=" {"+t.ii[i][0]+","+t.ii[i][1]+"},";
+        for( int i=0; i<jj.length;i++) q+=" {"+jj[i][0]+","+jj[i][1]+"},";
         tt( q.substring( 0,q.length()-1 ) );
     }
-    static String lar2s( long[] lar) { String s="long[]:  "; for( long q: lar) s+=q+", "; return s;}
+    static String larr2s( long[] lar) { String s="long[]:  "; for( long q: lar) s+=q+", "; return s;}
     static void tt(String x){System.out.println( x );}
 //*/    
 }
