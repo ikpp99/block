@@ -1,6 +1,5 @@
 package com.pik.xmem;
 
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.TreeMap;
 
@@ -139,7 +138,7 @@ public class Block
         return s+"\n-------------------------------------------------\n\t\tFree:\t\t"+free;
     }
     
-    public void copy( Object arr, boolean put) throws Exception { mem.copyArr( loc+head.off, arr, put );}
+    public void copyALL( Object arr, boolean put) throws Exception { mem.copyArr( loc+head.off, arr, put );}
     
     static public int arrLen( long[] size ){ int xx=1; for( long l: size ) xx *= l; return xx;}
     
@@ -187,59 +186,78 @@ public class Block
     
     public void part( Index idx, Object arr, boolean put ) throws Exception 
     {
-        long[][] reInd = Index.realIndex( idx.ii, head );
-        long dat = loc + head.off;
+        rel = Index.realIndex( idx.ii, head );  klen = rel.length;
+        kk = new long[klen][2]; rel2kk( klen );
+        narr = (int)rel[0][1];
         
-        switch( reInd.length ){
-            case 1:  copy1( dat, head.siz, reInd, arr, put ); break;
-            case 2:  copy2( dat, head.siz, reInd, arr, put ); break;
-            case 3:  copy3( dat, head.siz, reInd, arr, put ); break;
+        kd = new long[ klen ];
+        for( int i=0; i<klen; i++) {
+            kd[i] = head.nb;
+            for( int j=1;j<=i;j++) kd[i] *= head.siz[ j-1 ];  // 1,I,IJ,IJK...
         }
-    }
+        
+        pdat = loc + head.off; bufAct=put;
+        sarr = arr; parr=0;
+        buf=false;  bufAct=put;  bufPos=0;  bufLen=0;
 
-    private void copy1( long dat, long[] size, long[][] ind, Object arr, boolean put ) throws Exception
-    {
-        long pmem  = dat + head.nb * ( ind[0][0] - 1 );
-        mem.copyArr( pmem, arr, 0, (int)ind[0][1], put );
+            copy( klen-1 );
+            
+        bufCopy( 0, 0, 0 );   
     }
     
-    private void copy2( long dat, long[] size, long[][] ind, Object arr, boolean put ) throws Exception
+    private Object sarr;
+    private int klen, parr, narr;
+    private long pdat;
+    private long[][] rel, kk;
+    private long[]   kd;
+    private boolean buf, bufAct; long bufPos; int bufPar, bufLen;
+    
+    private void copy( int p ) throws Exception
     {
-        long ja=ind[1][0], jb=ja + ind[1][1], i=ind[0][0]-1;  int ii=(int)size[0],  parr=0; 
-        for( long j=ja; j<jb; j++ ){
-             long pmem  = dat + head.nb * ( ii*(j-1) + i );
-tt("........ parr="+parr+", ii="+ii+", pmem="+pmem );             
-             mem.copyArr( pmem, arr, parr, ii, put );
-             parr += ii; 
+        rel2kk( p );
+        if( p > 0 ) {
+           long xx = kk[p][0]+kk[p][1]; 
+           while( kk[p][0] < xx ){ copy( p-1 ); kk[p][0]++;}
+           kk[p][0] = rel[p][0];
+       }
+       else {  // p==0
+           long pos = pdat; 
+           for(int i=0;i<klen;i++) pos += (kk[i][0]-1) * kd[i];
+           
+//           mem.copyArr( pos, sarr, parr, narr, bufAct );       //TODO use of BUFF !!!
+           bufCopy( pos, parr, narr );
+           parr += narr;
+       }
+    }
+    private void bufCopy( long pos, int parr, int narr ) throws Exception {
+        if( buf ){
+            if( bufPos + bufLen*head.nb == pos ) { bufLen += narr; return;}
+            else mem.copyArr( bufPos, sarr, bufPar, bufLen, bufAct );
         }
+        buf=true;  bufPos = pos;  bufPar = parr;   bufLen = narr;    
     }
     
-    private void copy3( long dat, long[] size, long[][] ind, Object arr, boolean put ) throws Exception
-    {
-        long ka=ind[2][0], kb=ka + ind[2][1];                 int jj=(int)( size[0]*size[1] ); 
-        long ja=ind[1][0], jb=ja + ind[1][1], i=ind[0][0]-1;  int ii=(int)  size[0],   parr=0; 
-        for( long k=ka; k<kb; k++ ){
-             long dk = dat + (k-1)*jj;
-             for( long j=ja; j<jb; j++ ){
-                 long pmem  = dk + ii*( j-1 ) + i;
-                 mem.copyArr( pmem, arr, parr, ii, put );
-                 parr += ii; 
-            }
-        }
-    }
+    private void rel2kk( int n ){ for(int i=0;i<n;i++){ kk[i][0]=rel[i][0]; kk[i][1]=rel[i][1];}}
     
 ///* DBG: =====================================================================================================
                                                                 static final boolean PUT=true, GET=false;
     public static void main( String[] args ) throws Exception
     {
-        LongMem mem = new LongMem( 512+1300 );
-        iniBlocks( mem );
-        Block aa1 = new Block( "aa1", type.DOUBLE, new long[]{2,3} ); 
-        Block lon2 = new Block( "lon2", type.LONG, new long[]{2,3,2}, 16 );lon2.copy(new long[]{-1,-2,-3,-4,-5,-6,-7,-8,-9,-10,-11,-12}, PUT ); 
+        LongMem mem = new LongMem( 512+1300 ); iniBlocks( mem );
+        
+        Block aa1 = new Block( "aa1", type.DOUBLE, new long[]{2,3} );
+        
+        Block lon2 = new Block( "lon2", type.LONG, new long[]{2,3,2}, 16 );
+        lon2.copyALL(new long[]{-1,-2,-3,-4,-5,-6,-7,-8,-9,-10,-11,-12}, PUT );
+        
         Block byt3 = new Block( "byt3", type.BYTE, new long[]{1,12,2}, 8 );
-        Block int4 = new Block( "int4", type.INT,  new long[]{2,3,3} ); int4.copy( new int[]{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18}, PUT ); 
+        Block int4 = new Block( "int4", type.INT,  new long[]{2,3,3} );
+        int4.copyALL( new int[]{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18}, PUT ); 
+        
         Block sh5 = new Block( type.SHORT, new long[]{4,2} ); 
-        Block bb6 = new Block( type.BYTE, new long[]{8,2} );  bb6.copy( new byte[]{-1,-2,-3,-4,-5,-6,-7,-8, 1,2,3,4,5,6,7,8}, PUT );
+        Block bb6 = new Block( type.BYTE, new long[]{8,2} );
+        bb6.copyALL( new byte[]{-1,-2,-3,-4,-5,-6,-7,-8, 1,2,3,4,5,6,7,8}, PUT );
+        
 tt("\n_______ 0: "+ bb6.ttBlock());
 tt( blocks());
 
@@ -265,18 +283,22 @@ tt( lon2.ttBlock());
         for(int k=1;k<=9;k++)
             for(int j=1;j<=7;j++)
                 for(int i=1;i<=5;i++) dd[p++] = 100*i + 10*j + k;
-        ijk.copy( dd, PUT );
-        tt( ijk.ttBlock());
-//        Index idx = new Index("2:3,2:5,2:7");
-//        Index idx = new Index("2:3");
-        Index idx = new Index("2:3,2:5");
-Index.tar( idx );        
-        int[] part = (int[])ijk.crePart( idx );  String s="part[];";for( int q: part )s+=" "+q; tt( s );
+        ijk.copyALL( dd, PUT );
+tt("[ "+dd.length+" ]: "+ijk.ttBlock());
 
+        Index idx = new Index("2:3,2:4,2:5");
+//        Index idx = new Index("2:3");
+//        Index idx = new Index("2:3,2:5");
+tt(""); Index.tar( idx );
+
+        int[] pat = (int[])ijk.crePart( idx );  String s="part["+pat.length+"];";for( int q: pat )s+=" "+q; tt( s );
+        ijk.part( idx, pat, GET );                     s="part["+pat.length+"];";for( int q: pat )s+=" "+q; tt( s );
         
-        ijk.part( idx, part, GET );  s="part[];";for( int q: part )s+=" "+q; tt( s );
+        idx = new Index("*,*,*");
+        int[] all = (int[]) ijk.crePart( idx );
+        ijk.part( idx, all, GET ); s="all["+all.length+"];";for(int q: all)s+=" "+q; tt( s );
+tt("_______________________________________________end.");
     }
-    
     static void tt(String x){System.out.println( x );}
 //*/    
 }

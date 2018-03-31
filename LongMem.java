@@ -78,7 +78,7 @@ public class LongMem
                                                               if(parr<0) parr=0;
         int  nb = typ.getNb();
         long arlen = len*nb , x = pmem+arlen;
-        if(  x > memLen ) throw new Exception("LongMem < "+pmem+"+"+arlen+" = "+x );
+        if(  x > memLen ) throw new Exception("LongMem = "+memLen+" < "+pmem+"+"+arlen+" = "+x );
 
         int b0=buf( pmem ), p0=off( pmem ), bx=buf( x ), ee=MM;
         while( b0 <= bx )
