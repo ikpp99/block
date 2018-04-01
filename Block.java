@@ -187,7 +187,7 @@ public class Block
     public void part( Index idx, Object arr, boolean put ) throws Exception 
     {
         rel = Index.realIndex( idx.ii, head );  klen = rel.length;
-        kk = new long[klen][2]; rel2kk( klen );
+        kk = new long[klen][2]; for(int i=0;i<klen;i++){ kk[i][0]=rel[i][0]; kk[i][1]=rel[i][1];}
         narr = (int)rel[0][1];
         
         kd = new long[ klen ];
@@ -200,7 +200,7 @@ public class Block
         sarr = arr; parr=0;
         buf=false;  bufAct=put;  bufPos=0;  bufLen=0;
 
-            copy( klen-1 );
+            copyRecurs( klen-1 );
             
         bufCopy( 0, 0, 0 );   
     }
@@ -212,19 +212,22 @@ public class Block
     private long[]   kd;
     private boolean buf, bufAct; long bufPos; int bufPar, bufLen;
     
-    private void copy( int p ) throws Exception
+    private void copyRecurs( int p ) throws Exception
     {
-        rel2kk( p );
         if( p > 0 ) {
            long xx = kk[p][0]+kk[p][1]; 
-           while( kk[p][0] < xx ){ copy( p-1 ); kk[p][0]++;}
-           kk[p][0] = rel[p][0];
+           while( kk[p][0] < xx )
+           {
+               copyRecurs( p-1 );
+               kk[p][0]++;
+           }
+           kk[p][0] = rel[p][0];  // restore index used !!!
        }
        else {  // p==0
            long pos = pdat; 
            for(int i=0;i<klen;i++) pos += (kk[i][0]-1) * kd[i];
            
-//           mem.copyArr( pos, sarr, parr, narr, bufAct );       //TODO use of BUFF !!!
+//         mem.copyArr( pos, sarr, parr, narr, bufAct );       // use of BUFF now !!!
            bufCopy( pos, parr, narr );
            parr += narr;
        }
@@ -236,8 +239,6 @@ public class Block
         }
         buf=true;  bufPos = pos;  bufPar = parr;   bufLen = narr;    
     }
-    
-    private void rel2kk( int n ){ for(int i=0;i<n;i++){ kk[i][0]=rel[i][0]; kk[i][1]=rel[i][1];}}
     
 ///* DBG: =====================================================================================================
                                                                 static final boolean PUT=true, GET=false;
