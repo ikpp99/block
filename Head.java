@@ -61,9 +61,9 @@ public class Head
     
     public String toString()
     {
-        String s="head: "+type.val( typ )+"[ ";
+        String s = type.val( typ )+" [ ";
         try{ for( long ind: siz ) s+=ind+", ";}catch(Exception e){}
-        return s.substring( 0, s.length()-2 )+" ], len="+len+", off="+off+", ext="+exx;
+        return s.substring( 0, s.length()-2 )+" ]  len="+len+", off="+off+", ext="+exx;
     }
     
     private void isLoc( long locMem ) throws Exception{

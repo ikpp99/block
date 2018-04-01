@@ -125,7 +125,7 @@ public class Block
         }
     }
     
-    public String toString(){ return "Block \""+nam+"\": "+head+", loc="+loc+", dat="+(loc+head.off);}
+    public String toString(){ return "Block \""+nam+"\"  "+head+",  loc="+loc+", dat="+(loc+head.off);}
     
     static public String blocks() throws Exception {
         String s="\n### Blocks:"; int i=0;
