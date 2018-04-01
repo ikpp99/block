@@ -197,7 +197,7 @@ public class Block
         }
         
         pdat = loc + head.off; bufAct=put;
-        sarr = arr; parr=0;
+        sarr = arr; parr=0; partyp=type.val( head.typ );
         buf=false;  bufAct=put;  bufPos=0;  bufLen=0;
 
             copyRecurs( klen-1 );
@@ -206,6 +206,7 @@ public class Block
     }
     
     private Object sarr;
+    private type partyp;
     private int klen, parr, narr;
     private long pdat;
     private long[][] rel, kk;
@@ -235,7 +236,7 @@ public class Block
     private void bufCopy( long pos, int parr, int narr ) throws Exception {
         if( buf ){
             if( bufPos + bufLen*head.nb == pos ) { bufLen += narr; return;}
-            else mem.copyArr( bufPos, sarr, bufPar, bufLen, bufAct );
+            else mem.copyArr( bufPos, sarr, bufPar, bufLen, partyp, bufAct );
         }
         buf=true;  bufPos = pos;  bufPar = parr;   bufLen = narr;    
     }

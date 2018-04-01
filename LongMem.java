@@ -68,14 +68,19 @@ public class LongMem
 
     public void copyArr( long pmem, Object arr, int parr, int len, boolean put ) throws Exception
     {
-                                       type typ = null;    
+        type typ = null;    
         if(      arr instanceof   byte[] ){ typ = type.BYTE;  if(parr<0) len = ((  byte[]) arr ).length;}
         else if( arr instanceof   long[] ){ typ = type.LONG;  if(parr<0) len = ((  long[]) arr ).length;}
         else if( arr instanceof    int[] ){ typ = type.INT;   if(parr<0) len = ((   int[]) arr ).length;}
         else if( arr instanceof double[] ){ typ = type.DOUBLE;if(parr<0) len = ((double[]) arr ).length;}
         else if( arr instanceof  float[] ){ typ = type.FLOAT; if(parr<0) len = (( float[]) arr ).length;}
         else if( arr instanceof  short[] ){ typ = type.SHORT; if(parr<0) len = (( short[]) arr ).length;}
-                                                              if(parr<0) parr=0;
+                                                              if(parr<0) parr=0;     
+        copyArr( pmem, arr, parr, len, typ, put );
+    }
+    
+    public void copyArr( long pmem, Object arr, int parr, int len, type typ, boolean put ) throws Exception
+    {
         int  nb = typ.getNb();
         long arlen = len*nb , x = pmem+arlen;
         if(  x > memLen ) throw new Exception("LongMem = "+memLen+" < "+pmem+"+"+arlen+" = "+x );
