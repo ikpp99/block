@@ -14,4 +14,17 @@ public enum type
     private int           nb;
     public  int        getNb     (){ return nb ;}
     static public type val( int i ){ return i<values().length? values()[ i ]: null;}
+    
+    static public Object creArr( type typ, int len ) 
+    {
+        switch( typ ) {
+            case BYTE  :  return new byte  [ len ];
+            case SHORT :  return new short [ len ];
+            case INT   :  return new int   [ len ];
+            case LONG  :  return new long  [ len ];
+            case FLOAT :  return new float [ len ];
+            case DOUBLE:  return new double[ len ];
+        }
+        return null;
+    }
 }

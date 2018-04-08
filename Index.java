@@ -5,24 +5,21 @@ import java.util.HashMap;
 
 public class Index
 {
-    public static final int DIM=5;
     protected long[][] ii;
-    
-    public Index(){ 
-        ii = new long[ DIM ][2];
-        for(int i=0;i<DIM;i++) ii[i][0]= ii[i][1]=1;
-    }
 
     public Index( long[][] index ){
-        this();
         if( index !=null ) {
-            int x = Math.min( DIM, index.length );
+            int x = index.length;
+            ii = new long[ x ][2];
             for(int i=0;i<x;i++){ ii[i][0]=index[i][0]; ii[i][1]=index[i][1];} 
         }
     }
     
     public Index( String s ){ // ",i,j[:jj],:jj,,", *="ALL from this"
-        this();
+        int j;        final int DIM=7;
+        long[][] tt = new long[ DIM ][2];
+        for(j=0;j< DIM ;j++) tt[j][0]=tt[j][1]=1;
+        
         if( s !=null && !s.isEmpty() ){
             String[] ss = s.split(","); int pss=0;
             for( String t: ss ){
@@ -40,32 +37,36 @@ public class Index
                                     if(  v !=null ) val = v;
                                     var = new StringBuilder();
                                 }
-                                ii[pss][m] = val==0? 1: val;
+                                tt[pss][m] = val==0? 1: val;
                                 val=0; m++;
                             }
                             else if( q=='*'){
-                                if( m==0){ ii[pss][m]=1;m++;}
-                                ii[pss][m] = -1; 
+                                if( m==0){ tt[pss][m]=1;m++;}
+                                tt[pss][m] = -1; 
                                 break;
                             }
                             else if('A'<= q && q <='Z' || 'a'<= q && q <='z'){ var.append( q );}
                         }
                         
-                        if( val !=0 ){ ii[pss][m]=val;}
+                        if( val !=0 ){ tt[pss][m]=val;}
                         else if( var.length()>0 ) {
                             Long v = vars.get( var.toString());
-                            if(  v !=null ) ii[pss][m]=v;
+                            if(  v !=null ) tt[pss][m]=v;
                         }
                     }
                 }
                 pss++;
             }
         }
+        int x = DIM;
+        while( x-->0 && tt[x][0]==1 && tt[x][1]==1 ){}
+        ii = new long[++x][2]; 
+        for(j=0;j<x;j++){ ii[j][0]=tt[j][0]; ii[j][1]=tt[j][1]; } 
     }
     
     public long[] getSize() {
-        long[] dd = new long[ DIM ];  int i,j=0;
-        for(i=0;i<DIM;i++){ dd[j++] = Math.max( ii[i][0], ii[i][1] );}
+        long[] dd = new long[ ii.length ];  int i,j=0;
+        for(i=0;i<dd.length;i++){ dd[j++] = Math.max( ii[i][0], ii[i][1] );}
         while( --j>0 ) if( dd[j]>1 ) break;
         return Arrays.copyOf( dd, j+1 );
     }
@@ -82,7 +83,6 @@ public class Index
     
     static public long[][] realIndex( long[][] ind, Head head ){
         int x = ind.length;
-        while( x-->0 && ind[x][0]==1 && ind[x][1]==1 ){} x++;
         long[][] jj = Arrays.copyOf( ind, x );
         
         for(int i=0; i<x; i++){
@@ -90,6 +90,15 @@ public class Index
             if( jj[i][1] == -1 ){ jj[i][1] = head.siz[i] - jj[i][0] + 1;}
         }
         return jj;
+    }
+    
+    public String toString(){ return idx2str( this.ii );}
+    
+    public static String idx2str( long[][] pp ){
+        String s="[";
+        for(int i=0;i<pp.length;i++) s+=" "+pp[i][0]+":"+pp[i][1]+",";
+        s = s.substring( 0, s.length()-1 )+" ]";
+        return s;
     }
     
 ///*==================================================================== DBG:  1 pars ~ 500 ns.
@@ -118,7 +127,7 @@ public class Index
         
         var("MM", 77777 );
         var("NN = 9999999 " );              tt("");
-        s="77, :MM, NN:*, MM:NN, *, 55: ";  tst( s );
+        s="77, :MM, NN:*,, MM:NN, *, 55: ";  tst( s );
         
         Head hh = new Head( type.INT, new long[]{300,200,100} );  tt(""); tt(""+hh);
         long[][] relInd = realIndex( new long[][]{{9,5},{9,-1},{-1,1}}, hh ); tii( relInd ); tt("");

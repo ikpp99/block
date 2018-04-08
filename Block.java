@@ -184,9 +184,13 @@ public class Block
         return arr;
     }
     
-    public void part( Index idx, Object arr, boolean put ) throws Exception 
+    public void part( Index idx, Object arr, boolean put ) throws Exception {
+        part( idx.ii, arr, put );
+    }
+
+    public void part( long[][] ix, Object arr, boolean put ) throws Exception 
     {
-        rel = Index.realIndex( idx.ii, head );  klen = rel.length;
+        rel = Index.realIndex( ix, head );  klen = rel.length;
         kk = new long[klen][2]; for(int i=0;i<klen;i++){ kk[i][0]=rel[i][0]; kk[i][1]=rel[i][1];}
         narr = (int)rel[0][1];
         
@@ -245,7 +249,9 @@ public class Block
                                                                 static final boolean PUT=true, GET=false;
     public static void main( String[] args ) throws Exception
     {
-        LongMem mem = new LongMem( 512+1300 ); iniBlocks( mem );
+//        LongMem mem = new LongMem( 512+1300 );
+        LongMem mem = new LongMem( 512+1300 + 5*7*9*8 + 40 );
+        iniBlocks( mem );
         
         Block aa1 = new Block( "aa1", type.DOUBLE, new long[]{2,3} );
         
@@ -299,6 +305,29 @@ tt(""); Index.tar( idx );
         idx = new Index("*,*,*");
         int[] all = (int[]) ijk.crePart( idx );
         ijk.part( idx, all, GET ); s="all["+all.length+"];";for(int q: all)s+=" "+q; tt( s );
+        
+tt("___________ part:");        
+        Part ppp = new Part( ijk,new Index("2:3,3:4,5"));
+        ppp.getPart();
+        tt( ""+ppp);
+        
+        Block r579 = new Block("r579", type.DOUBLE, new long[]{ 5,7,9 } );
+        Part rrr = new Part( r579,new Index("*,*,*"));
+        for(int k=1;k<=9;k++)
+            for(int j=1;j<=7;j++)
+                for(int i=1;i<=5;i++) rrr.put( Double.valueOf( 100*i + 10*j + k ), new int[]{i,j,k});
+        rrr.setPart();
+        
+        idx = new Index("2:3,2:4,2:5");        
+tt("\n"+idx);        
+        Part rr = new Part( r579, idx );
+        rr.getPart();
+tt("idx[][]:  "+Index.idx2str( idx.ii ));        
+        tt( "############################ "+rr);
+        
+//        tt( blocks());       
+//        tt( "need = "+5*7*9*8);
+        
 tt("_______________________________________________end.");
     }
     static void tt(String x){System.out.println( x );}
