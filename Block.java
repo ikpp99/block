@@ -1,6 +1,5 @@
 package com.pik.xmem;
 
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.TreeMap;
 
@@ -28,6 +27,8 @@ public class Block
     public static Block getBlock( String name ) throws Exception { return blockNamBlk.get( name );}
 
     public  Block( type type, long[] size ) throws Exception { this("_"+(Seq++) , type, size, 0 );}
+    public  Block( String name, type type, Index idx ) throws Exception{ this( name, type, idx.getSize(), 0 );}
+    public  Block( String name, type type, int [] size ) throws Exception{ this( name, type, ii2ll( size ),0);}
     public  Block( String name, type type, long[] size ) throws Exception { this( name, type, size, 0 );}
     public  Block( String name, type type, long[] size, int extLen ) throws Exception 
     {
@@ -42,7 +43,11 @@ public class Block
             }
         }
     }
-
+    private static long[] ii2ll( int[] m ){
+        long[] l=new long[ m.length ];
+        for( int i=0; i<m.length; i++) l[i]=m[i];
+        return l;
+    }
     private long writeBlock( String name )  throws Exception
     {
         long sum=0;
@@ -297,6 +302,12 @@ public class Block
            long bbb = pdaB; for(int i=0;i<klen;i++) bbb += (kb[i][0]-1) * bd[i]; 
            mem.copyLeft( bbb, pos, iii );
        }
+    }
+    
+    public String blk2str( Index idx ){ return blk2str( idx.ii );}
+    public String blk2str( long[][] dd ){
+        String s = this.toString();
+       return s; 
     }
     
 ///* DBG: =====================================================================================================

@@ -141,11 +141,9 @@ public class Index
 
     static void tst( String s ){ tt( "### Str|"+s+"|" ); Index t=new Index(s); tar( t );}
     static void tar( Index t ){ tii( t.ii );}
-    static void tii( long[][] jj ){
-        String q="index[][]:"; 
-        for( int i=0; i<jj.length;i++) q+=" {"+jj[i][0]+","+jj[i][1]+"},";
-        tt( q.substring( 0,q.length()-1 ) );
-    }
+    
+    static void tii( long[][] jj ){ tt( idx2str( jj ));}
+    
     static String larr2s( long[] lar) { String s="long[]:  "; for( long q: lar) s+=q+", "; return s;}
     static void tt(String x){System.out.println( x );}
 //*/    
