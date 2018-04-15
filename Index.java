@@ -81,13 +81,17 @@ public class Index
     }
     static private HashMap<String,Long> vars;
     
-    static public long[][] realIndex( long[][] ind, Head head ){
+    static public long[][] realIndex( long[][] ind, Head head ) throws Exception {
         int x = ind.length;
         long[][] jj = Arrays.copyOf( ind, x );
         
         for(int i=0; i<x; i++){
             if( jj[i][0] == -1 ){ jj[i][1] = -1; jj[i][0] = 1; }
-            if( jj[i][1] == -1 ){ jj[i][1] = head.siz[i] - jj[i][0] + 1;}
+            if( jj[i][1] == -1 ){ jj[i][1] = head.siz[i] - jj[i][0]+1;}
+
+            if( jj[i][0]<1 || jj[i][0] > head.siz[i]
+            ||  jj[i][1]<1 || jj[i][0] + jj[i][1] -1 > head.siz[i] ) throw new Exception("BAD Index");
+            
         }
         return jj;
     }
@@ -102,7 +106,7 @@ public class Index
     }
     
 ///*==================================================================== DBG:  1 pars ~ 500 ns.
-    public static void main( String[] args )
+    public static void main( String[] args ) throws Exception
     {
         Index t=new Index( new long[][]{ {23,-1}, {34,55}, {1,-1} }); tar( t );
         String s;

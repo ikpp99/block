@@ -1,5 +1,6 @@
 package com.pik.xmem;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.TreeMap;
 
@@ -161,14 +162,14 @@ public class Block
         return s;
     }
 
-    public long[] getPartSize( Index idx ){
+    public long[] getPartSize( Index idx ) throws Exception {
         long[][] reInd = Index.realIndex( idx.ii, head );
         long[] partSize = new long[ reInd.length ];
         for( int i=0;i<partSize.length;i++) partSize[i] = reInd[i][1];
         return partSize;
     }
     
-    public Object crePart( Index idx ){ return crePart( getPartSize( idx ));}
+    public Object crePart( Index idx ) throws Exception { return crePart( getPartSize( idx ));}
     
     public Object crePart( long[] partSize ){
         int xx = arrLen( partSize );
@@ -183,14 +184,14 @@ public class Block
         }
         return arr;
     }
+//------------------------------------------------------------------------------ copyPart -> arr:
     
-    public void part( Index idx, Object arr, boolean put ) throws Exception {
-        part( idx.ii, arr, put );
-    }
-
+    public void part( Index idx, Object arr, boolean put ) throws Exception{ part( idx.ii, arr, put );}
+    
     public void part( long[][] ix, Object arr, boolean put ) throws Exception 
     {
-        rel = Index.realIndex( ix, head );  klen = rel.length;
+        rel = Index.realIndex( ix, head );
+        klen = rel.length;
         kk = new long[klen][2]; for(int i=0;i<klen;i++){ kk[i][0]=rel[i][0]; kk[i][1]=rel[i][1];}
         narr = (int)rel[0][1];
         
@@ -202,7 +203,7 @@ public class Block
         
         pdat = loc + head.off; bufAct=put;
         sarr = arr; parr=0; partyp=type.val( head.typ );
-        buf=false;  bufAct=put;  bufPos=0;  bufLen=0;
+        buf=false;  bufPos=0;  bufLen=0;
 
             copyRecurs( klen-1 );
             
@@ -244,13 +245,66 @@ public class Block
         }
         buf=true;  bufPos = pos;  bufPar = parr;   bufLen = narr;    
     }
+//------------------------------------------------------------------------------ copyPart -> Blk:
+    
+    private long[][] reb,kb; long[] bd; long pdaB, iii;
+    
+    public void copyBB( Block A, Index idA, Block B, Index idB ) throws Exception { copyBB( A,idA.ii, B, idB.ii );}
+
+    public void copyBB( Block A, long[][] idA, Block B, long[][] idB ) throws Exception {
+        if( A.head.typ != B.head.typ ) throw new Exception("Blk.TYPE");
+        
+        rel = Index.realIndex( idA, A.head );
+        reb = Index.realIndex( idB, B.head );
+
+        klen = rel.length;
+        kk = new long[klen][2]; for(int i=0;i<klen;i++){ kk[i][0]=rel[i][0]; kk[i][1]=rel[i][1];}
+        kd = new long[ klen ];
+        for( int i=0; i<klen; i++) {
+            kd[i] = A.head.nb;
+            for( int j=1;j<=i;j++) kd[i] *= A.head.siz[ j-1 ];  // 1,I,IJ,IJK...
+            reb[i][1] = rel[i][1];
+        }
+
+        reb  = Index.realIndex( reb, B.head );
+        kb = new long[klen][2]; for(int i=0;i<klen;i++){ kb[i][0]=reb[i][0]; kb[i][1]=reb[i][1];}
+        bd = new long[ klen ];
+        for( int i=0; i<klen; i++) {
+            bd[i] = B.head.nb;
+            for( int j=1;j<=i;j++) kd[i] *= B.head.siz[ j-1 ];  // 1,I,IJ,IJK...
+        }
+        
+        pdat = A.loc + A.head.off;
+        pdaB = B.loc + B.head.off;  iii = A.head.nb*rel[0][1];
+
+        copyBBrecurs( klen-1 );
+    }
+    private void copyBBrecurs( int p ) throws Exception
+    {
+        if( p > 0 ) {
+           long xx = kk[p][0]+kk[p][1]; 
+           while( kk[p][0] < xx )
+           {
+               copyRecurs( p-1 );
+               kk[p][0]++;
+               kb[p][0]++;
+           }
+           kk[p][0] = rel[p][0];  // restore index used !!!
+           kb[p][0] = reb[p][0];  // restore index used !!!
+       }
+       else {  // p==0
+           long pos = pdat; for(int i=0;i<klen;i++) pos += (kk[i][0]-1) * kd[i];
+           long bbb = pdaB; for(int i=0;i<klen;i++) bbb += (kb[i][0]-1) * bd[i]; 
+           mem.copyLeft( bbb, pos, iii );
+       }
+    }
     
 ///* DBG: =====================================================================================================
                                                                 static final boolean PUT=true, GET=false;
     public static void main( String[] args ) throws Exception
     {
 //        LongMem mem = new LongMem( 512+1300 );
-        LongMem mem = new LongMem( 512+1300 + 5*7*9*8 + 40 );
+        LongMem mem = new LongMem( 512+1300 + 5*7*9*8 + 30 );
         iniBlocks( mem );
         
         Block aa1 = new Block( "aa1", type.DOUBLE, new long[]{2,3} );
@@ -325,8 +379,8 @@ tt("\n"+idx);
 tt("idx[][]:  "+Index.idx2str( idx.ii ));        
         tt( "############################ "+rr);
         
-//        tt( blocks());       
-//        tt( "need = "+5*7*9*8);
+        tt( blocks());       
+        tt( "need = "+5*7*9*8);
         
 tt("_______________________________________________end.");
     }

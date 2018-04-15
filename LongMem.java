@@ -98,11 +98,13 @@ public class LongMem
     private int buf( long p ){ return (int)( p/MM );}
     private int off( long p ){ return (int)( p - MM*buf( p ));} 
 
-    public void copyLeft( long d, long s, long n )      // Left: d < s !!!
+    public void copyLeft( long d, long s, long n ) throws Exception   // Left: d <= s || s+n <= d !!!
     {    
-        if( d < s ){ 
+        if( d <= s || s+n <= d ){
+            
             int sss = buf( s ), ssX = buf( s+n ), s0 = off( s ), sZ = off( s+n ), sx=MM; 
             int ddd = buf( d ), ddX = buf( d+n ), d0 = off( d ), dZ = off( d+n ), dx=MM;
+            
             long xx=0;
 
             while(  xx < n ){
@@ -116,10 +118,11 @@ public class LongMem
                 d0 += nn; if( d0==MM ){ ddd++; d0=0; dx=MM;}
                 xx += nn;
             }
-        }
+        } 
+        else throw new Exception("CrossCopy"); 
     }
     
-///* DBG:
+///* DBG: ===============================================================================================
                                                                 static final boolean PUT=true, GET=false;
     public static void main( String[] args ) throws Exception
     {

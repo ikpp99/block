@@ -36,6 +36,7 @@ public class Part
         for(int n=1;n<ijk.length;n++) loc += (ijk[n]-1) * xx[n]; 
         return loc;
     }
+//------------------------------------------------------------------------------
     
     public Object get( int i               ){ return get( new int[]{ i     });} 
     public Object get( int i, int j        ){ return get( new int[]{ i,j   });} 
@@ -54,6 +55,7 @@ public class Part
         }
         return null;
     }
+//------------------------------------------------------------------------------
 
     public void put( Object v, int i               ){ put( v, new int[]{ i     });} 
     public void put( Object v, int i, int j        ){ put( v, new int[]{ i,j   });} 
