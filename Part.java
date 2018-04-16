@@ -26,9 +26,6 @@ public class Part
         }
         arrtyp = type.val( blk.head.typ );
         arr = type.creArr( arrtyp, arrlen );
-        
-//String q="\n____________________xx[]: "+" "+Index.idx2str( pp )+"\n";
-//for(int i=0;i<xx.length;i++) q+=" "+xx[i]; tt(q+"\n");        
     }
     
     public void getPart() throws Exception{ blk.part( pp, arr, false );}
@@ -36,12 +33,7 @@ public class Part
 
     public int arrLoc( int[] ijk ) { // ijk[n] > 0 !!! 
         int loc=ijk[0]-1;
-String q="arrLoc ijk[]:"+ijk[0];         
-        for(int n=1;n<ijk.length;n++) {
-            loc += (ijk[n]-1) * xx[n];
-            q+=" "+ijk[n];
-        }
-tt(q+", loc="+loc);
+        for(int n=1;n<ijk.length;n++) loc += (ijk[n]-1) * xx[n];
         return loc;
     }
 //------------------------------------------------------------------------------
@@ -82,14 +74,13 @@ tt(q+", loc="+loc);
     }
     
     public String toString(){
-        String s = blk.toString(); p="";
+        String s = "\nPart of "+blk.toString(); p="";
         int vx = pp.length;
-        vv = Arrays.copyOf( pp, vx ); 
-        ss = Arrays.copyOf( pp, vx ); 
+        vv = new long[vx][2]; for(int i=0;i<vx;i++){ vv[i][0]=pp[i][0]; vv[i][1]=pp[i][1];}   
         par2str( vx-1 );
         return s+p;
     }
-    private long[][] vv, ss;  String p;
+    private long[][] vv;  String p;
     private void par2str( int pv ) {
         if( pv > 1) {
             long sav = vv[pv][0], end = sav+vv[pv][1];
@@ -101,28 +92,29 @@ tt(q+", loc="+loc);
         }
         else {  // pv=1
             p+="\n" + partIndex() + partData() ;
-            
         }
     }
     private String partData() {
-        String s=Index.idx2str( vv )+" ## ";
         int vx=(int)vv.length;
-        int[] ijk = new int[ vx ];
-        for(int i=0;i<vx;i++) ijk[i] = (int)( vv[i][0] - ss[i][0]+1);
+        int[] ijk = new int[ vx ], ij = new int[ vx ];
+        for(int i=0;i<vx;i++) ijk[i] = ij[i] = (int) vv[i][0];
         
-        for(int i=(int)vv[0][0]; i<(int)(vv[0][0]+vv[0][1]); i++ ){ s+="\n";
-            for(int j=(int)vv[1][0]; j<(int)(vv[1][0]+vv[1][1]); j++ ){
-                
-                ijk[0]=i - (int)ss[0][0] + 1; 
-                ijk[1]=j - (int)ss[1][0] + 1;
-                
-                
-tt("i="+ijk[0]+",j="+ijk[1]+", k="+ijk[2]+(ijk.length>3? ", l="+ijk[3]:"")+" pos="+arrLoc( ijk ));                
-                s+=" "+get( ijk );
-            }
+        String s="";
+        for(int i=ijk[0]; i<ijk[0]+vv[0][1]; i++ ){     ij[0]=i; s+="\n"; 
+            for(int j=ijk[1]; j<ijk[1]+vv[1][1]; j++ ){ ij[1]=j; s+=" "+getPar( ij );}
         }
         return s;
     }
+    
+    
+    private String getPar( int[] ijk ){
+        int[] ij = new int[ ijk.length ];
+        for(int i=0;i<ijk.length;i++) ij[i] = ijk[i] - (int)pp[i][0] +1;
+        return " "+get( ij );
+    }
+    
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++
+    
     private String partIndex() {
         String s = Index.idx2str( vv );
         if( vv.length > 2 ) {
@@ -147,7 +139,7 @@ tt("i="+ijk[0]+",j="+ijk[1]+", k="+ijk[2]+(ijk.length>3? ", l="+ijk[3]:"")+" pos
         }
         return null;
     }
-    
+
 ///* DBG: =====================================================================================================
     
     public static void main( String[] args ) throws Exception {
@@ -159,18 +151,23 @@ tt("i="+ijk[0]+",j="+ijk[1]+", k="+ijk[2]+(ijk.length>3? ", l="+ijk[3]:"")+" pos
             for(int j=1;j<=7;j++)
                 for(int i=1;i<=5;i++) rrr.put( Integer.valueOf( 100*i + 10*j + k ), new int[]{i,j,k});
         rrr.setPart(); tt(""+rrr);
-        Block.blocks();
-        Block qq = new Block("qq",type.INT, new int[]{3,4,5,6}); tt(""+ qq );
         
+        Block qq = new Block("qq",type.INT, new int[]{3,4,5,6}); tt("\n"+ qq );
+        rrr = new Part( qq, new Index("*,*,*,*"));
         
+        for(int l=1; l<= qq.head.siz[3]; l++)
+            for(int k=1; k<= qq.head.siz[2]; k++)
+                for(int j=1; j<= qq.head.siz[1]; j++)
+                    for(int i=1; i<= qq.head.siz[0]; i++)
+                        rrr.put( Integer.valueOf( 1000*i + 100*j + k*10 + l ), new int[]{i,j,k,l});
         
-        Index ip = new Index("1:3,2:3,2:4,3:4");
-        Part  q = new Part( qq, ip );
+        rrr.setPart(); tt(""+rrr);
+        
+        Part  q = new Part( qq, new Index("1:3,2:3,2:4,3:4"));
+        q.getPart();
         tt(""+q);
-        
-        tt("\n2,3,4\t"+ rrr.get(2,3,4));
-        tt("4,5,6\t"+ rrr.get(4,5,6));
     }
     static void tt(String x){System.out.println( x );}
+    static void tt(){tt("");}
     //*/        
 }
