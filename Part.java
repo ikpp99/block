@@ -11,7 +11,7 @@ public class Part
     protected type     arrtyp;
     private   int[]    xx;     // size of part
     
-    public Part( Block block, Index idx ) throws Exception { this( block, idx.ii );}
+    public Part( Block block, Index idx ) throws Exception { this( block, Index.realIndex( idx.ii, block.head ));}
     
     public Part( Block block, long[][] indx ) throws Exception 
     {
@@ -74,15 +74,28 @@ public class Part
     }
     
     public String toString(){
-        String s = "\nPart of "+blk.toString(); p="";
+        String s = "\nPart: "+smpInd( pp )+" of "+blk.toString(); p="";
         int vx = pp.length;
-        vv = new long[vx][2]; for(int i=0;i<vx;i++){ vv[i][0]=pp[i][0]; vv[i][1]=pp[i][1];}   
+        vv = new long[vx][2]; for(int i=0;i<vx;i++){ vv[i][0]=pp[i][0]; vv[i][1]=pp[i][1];}
+        
+        i1 = finDD( 0, vv );  i2 = finDD( i1+1, vv );
+        if( i1 <0 )  i1=i2=1;
+        if( i2 <0 ){ i2=i1; i1=1;}
+        
         par2str( vx-1 );
         return s+p;
     }
+    private String smpInd( long[][] qq ){ return Index.idx2str( qq ).replaceAll(":1","");}
+
+    private int finDD( int i, long[][] dd ){
+        int ddx = dd.length;
+        while( i < ddx && dd[i][1]==1 ) i++;
+        return i<ddx? i: -1;
+    }
+    
     private long[][] vv;  String p;
     private void par2str( int pv ) {
-        if( pv > 1) {
+        if( pv > i2) {
             long sav = vv[pv][0], end = sav+vv[pv][1];
             while( vv[pv][0] < end) {
                 par2str( pv-1 );
@@ -90,18 +103,25 @@ public class Part
             }
             vv[pv][0] = sav;
         }
-        else {  // pv=1
-            p+="\n" + partIndex() + partData() ;
+        else {  // pv=i2 ???
+            p+="\n" + partIndex() + partData(); //TODO dbg
         }
     }
+
+    private int i1, i2;
     private String partData() {
         int vx=(int)vv.length;
         int[] ijk = new int[ vx ], ij = new int[ vx ];
         for(int i=0;i<vx;i++) ijk[i] = ij[i] = (int) vv[i][0];
         
         String s="";
-        for(int i=ijk[0]; i<ijk[0]+vv[0][1]; i++ ){     ij[0]=i; s+="\n"; 
-            for(int j=ijk[1]; j<ijk[1]+vv[1][1]; j++ ){ ij[1]=j; s+=" "+getPar( ij );}
+        for(int i=ijk[i1]; i<ijk[i1]+vv[i1][1]; i++ ){ 
+            ij[i1]=i; s+="\n"; 
+            for(int j=ijk[i2]; j<ijk[i2]+vv[i2][1]; j++ ){
+                ij[i2]=j;
+//              s+=" "; for(int t=0;t<ij.length;t++) s+=ij[t];
+                s+=" "+getPar( ij );
+            }
         }
         return s;
     }
@@ -109,22 +129,23 @@ public class Part
     
     private String getPar( int[] ijk ){
         int[] ij = new int[ ijk.length ];
-        for(int i=0;i<ijk.length;i++) ij[i] = ijk[i] - (int)pp[i][0] +1;
+        for(int i=0;i<ijk.length;i++)
+            ij[i] = ijk[i] - (int)pp[i][0] +1;
         return " "+get( ij );
     }
     
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++
     
     private String partIndex() {
-        String s = Index.idx2str( vv );
-        if( vv.length > 2 ) {
-            int i = s.indexOf(',');
-            i = s.indexOf(',',i+1);
-            s = s.substring( 0, i );
-            for(i=2;i<vv.length;i++) s+=", "+vv[i][0]; 
-            s+=" ]";
+//        String s = Index.idx2str( vv );
+//        String s = smpInd( vv );
+        String s="[ ";
+        for(int i=0; i<vv.length; i++){
+            s+=vv[i][0];
+            if( i==i1 || i==i2 ) s+=(pp[i][1]>1?":"+pp[i][1]:"");
+            s +=", ";
         }
-        return s;
+        return s.substring( 0, s.length()-2 )+" ]";
     }
     
     private String objStr( int n ) {
@@ -166,6 +187,13 @@ public class Part
         Part  q = new Part( qq, new Index("1:3,2:3,2:4,3:4"));
         q.getPart();
         tt(""+q);
+        
+//        Part ww =  new Part( qq, new Index("3,2:3,4:2,2:5"));
+//        Part ww =  new Part( qq, new Index("3,2:3,4,2:5"));
+        Part ww =  new Part( qq, new Index("3,2,4,*"));
+        ww.getPart();
+        tt(""+ww );
+        
     }
     static void tt(String x){System.out.println( x );}
     static void tt(){tt("");}
