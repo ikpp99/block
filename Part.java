@@ -11,7 +11,7 @@ public class Part
     protected type     arrtyp;
     private   int[]    xx;     // size of part
     
-    public Part( Block block, Index idx ) throws Exception { this( block, Index.realIndex( idx.ii, block.head ));}
+    public Part( Block block, Index idx ) throws Exception { this( block, idx.ii );}
     
     public Part( Block block, long[][] indx ) throws Exception 
     {
