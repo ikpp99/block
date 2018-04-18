@@ -79,8 +79,8 @@ public class Part
         vv = new long[vx][2]; for(int i=0;i<vx;i++){ vv[i][0]=pp[i][0]; vv[i][1]=pp[i][1];}
         
         i1 = finDD( 0, vv );  i2 = finDD( i1+1, vv );
-        if( i1 <0 )  i1=i2=1;
-        if( i2 <0 ){ i2=i1; i1=1;}
+        if( i1 <0 )  i1=i2=0;
+        if( i2 <0 ){ i2=i1; i1=0;}
         
         par2str( vx-1 );
         return s+p;
@@ -122,6 +122,7 @@ public class Part
 //              s+=" "; for(int t=0;t<ij.length;t++) s+=ij[t];
                 s+=" "+getPar( ij );
             }
+            if( i1==i2 ) break;
         }
         return s;
     }
@@ -182,17 +183,21 @@ public class Part
                     for(int i=1; i<= qq.head.siz[0]; i++)
                         rrr.put( Integer.valueOf( 1000*i + 100*j + k*10 + l ), new int[]{i,j,k,l});
         
-        rrr.setPart(); tt(""+rrr);
+        rrr.setPart();
+        tt(""+rrr);
         
         Part  q = new Part( qq, new Index("1:3,2:3,2:4,3:4"));
         q.getPart();
         tt(""+q);
         
-//        Part ww =  new Part( qq, new Index("3,2:3,4:2,2:5"));
+        Part ww =  new Part( qq, new Index("3,2:3,4:2,2:5"));
 //        Part ww =  new Part( qq, new Index("3,2:3,4,2:5"));
-        Part ww =  new Part( qq, new Index("3,2,4,*"));
-        ww.getPart();
-        tt(""+ww );
+//        Part ww =  new Part( qq, new Index("3,2,4,*"));
+        ww =  new Part( qq, new Index("*")); ww.getPart(); tt(""+ww );
+        ww =  new Part( qq, new Index("*,4")); ww.getPart(); tt(""+ww );
+        ww =  new Part( qq, new Index("*,,*")); ww.getPart(); tt(""+ww );
+        ww =  new Part( qq, new Index("3,,*")); ww.getPart(); tt(""+ww );
+        ww =  new Part( qq, new Index(",,*,*")); ww.getPart(); tt(""+ww );
         
     }
     static void tt(String x){System.out.println( x );}
