@@ -201,7 +201,6 @@ public class Part
         ww =  new Part( qq, new Index(",,,*")); ww.getPart(); tt(""+ww );
         ww =  new Part( qq, new Index(",3,4,5")); ww.getPart(); tt(""+ww );
     }
-    static void tt(String x){System.out.println( x );}
-    static void tt(){tt("");}
+    static void tt(String x){System.out.println( x );}static void tt(){tt("");}
     //*/        
 }
