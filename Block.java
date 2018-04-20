@@ -133,8 +133,8 @@ public class Block
     
     public String toString(){ return "Block: \""+nam+"\" "+head+", loc="+loc+", dat="+(loc+head.off);}
     
-    static public String blocks() throws Exception {
-        String s="\n### Blocks:"; int i=0;
+    static public String cat() throws Exception {
+        String s= "\n### Catalog:"; int i=0;
         for( String name: blockNamBlk.keySet()) s+="\n    "+(++i)+".\t\t"+getBlock( name );
         s+="\n### Holes:"; i=0; long free=0;
         for( Long p: freeLocLen.keySet()){ 
@@ -252,35 +252,39 @@ public class Block
     }
 //------------------------------------------------------------------------------ copyPart -> Blk:
     
-    private long[][] reb,kb; long[] bd; long pdaB, iii;
+    private long[][] reb,bk; long[] bd; long pdaB, iii;
     
-    public void copyBB( Block A, Index idA, Block B, Index idB ) throws Exception { copyBB( A,idA.ii, B, idB.ii );}
+    public void copyBB( Index idA, Block B, Index idB ) throws Exception { copyBB( idA.ii, B, idB.ii );}
 
-    public void copyBB( Block A, long[][] idA, Block B, long[][] idB ) throws Exception {
-        if( A.head.typ != B.head.typ ) throw new Exception("Blk.TYPE");
+    public void copyBB( long[][] idA, Block B, long[][] idB ) throws Exception {
+        if( head.typ != B.head.typ ) throw new Exception("Blk.TYPE");
         
-        rel = Index.realIndex( idA, A.head );
-        reb = Index.realIndex( idB, B.head );
+        rel = Index.realIndex( idA, head );
 
-        klen = rel.length;
-        kk = new long[klen][2]; for(int i=0;i<klen;i++){ kk[i][0]=rel[i][0]; kk[i][1]=rel[i][1];}
-        kd = new long[ klen ];
-        for( int i=0; i<klen; i++) {
-            kd[i] = A.head.nb;
-            for( int j=1;j<=i;j++) kd[i] *= A.head.siz[ j-1 ];  // 1,I,IJ,IJK...
-            reb[i][1] = rel[i][1];
+        kk  = Index.copyL2( rel ); klen = rel.length;
+        kd  = new long[ klen ];
+        for( int i=0;i<klen; i++) {
+             kd[i] = head.nb;
+             for( int j=1;j<=i;j++) kd[i] *= head.siz[ j-1 ];  // 1,I,IJ,IJK...
         }
 
-        reb  = Index.realIndex( reb, B.head );
-        kb = new long[klen][2]; for(int i=0;i<klen;i++){ kb[i][0]=reb[i][0]; kb[i][1]=reb[i][1];}
-        bd = new long[ klen ];
-        for( int i=0; i<klen; i++) {
-            bd[i] = B.head.nb;
-            for( int j=1;j<=i;j++) kd[i] *= B.head.siz[ j-1 ];  // 1,I,IJ,IJK...
+        reb = Index.copyL2( rel );                                    // set ii, size  
+        long[][] rb = Index.realIndex( idB, B.head );
+        for(int i=0;i<klen;i++){
+            reb[i][0] = i<rb.length? rb[i][0]: 1; // set i
+            if( reb[i][0]+reb[i][1]-1 > B.head.siz[i] )
+                throw new Exception("BAD Index "+(i+1)+": "+(reb[i][0]+reb[i][1]-1)+" > size");
         }
-        
-        pdat = A.loc + A.head.off;
-        pdaB = B.loc + B.head.off;  iii = A.head.nb*rel[0][1];
+
+        bk  = Index.copyL2( reb );
+        bd  = new long[ klen ];
+        for( int i=0; i<klen; i++) {
+             bd[i] = B.head.nb;
+             for( int j=1;j<=i;j++) bd[i] *= B.head.siz[ j-1 ];  // 1,I,IJ,IJK...
+        }
+         
+        pdat =   loc +   head.off;
+        pdaB = B.loc + B.head.off;  iii = head.nb*rel[0][1];
 
         copyBBrecurs( klen-1 );
     }
@@ -290,24 +294,18 @@ public class Block
            long xx = kk[p][0]+kk[p][1]; 
            while( kk[p][0] < xx )
            {
-               copyRecurs( p-1 );
+               copyBBrecurs( p-1 );
                kk[p][0]++;
-               kb[p][0]++;
+               bk[p][0]++;
            }
            kk[p][0] = rel[p][0];  // restore index used !!!
-           kb[p][0] = reb[p][0];  // restore index used !!!
+           bk[p][0] = reb[p][0];  // restore index used !!!
        }
        else {  // p==0
            long pos = pdat; for(int i=0;i<klen;i++) pos += (kk[i][0]-1) * kd[i];
-           long bbb = pdaB; for(int i=0;i<klen;i++) bbb += (kb[i][0]-1) * bd[i]; 
+           long bbb = pdaB; for(int i=0;i<klen;i++) bbb += (bk[i][0]-1) * bd[i]; 
            mem.copyLeft( bbb, pos, iii );
        }
-    }
-    
-    public String blk2str( Index idx ){ return blk2str( idx.ii );}
-    public String blk2str( long[][] dd ){
-        String s = this.toString();
-       return s; 
     }
     
 ///* DBG: =====================================================================================================
@@ -332,14 +330,14 @@ public class Block
         bb6.copyALL( new byte[]{-1,-2,-3,-4,-5,-6,-7,-8, 1,2,3,4,5,6,7,8}, PUT );
         
 tt("\n_______ 0: "+ bb6.ttBlock());
-tt( blocks());
+tt( cat());
 
         sh5.delete();
         delete("byt3");
 //        lon2.delete();
 //        int4.delete();
         delete("aa1");
-tt( blocks());
+tt( cat());
 
 tt("\n_______ 1: "+ bb6.ttBlock());
 tt( int4.ttBlock());
@@ -373,7 +371,7 @@ tt(""); Index.tar( idx );
         
 tt("___________ part:");        
         Part ppp = new Part( ijk,new Index("2:3,3:4,5"));
-        ppp.getPart();
+        ppp.get();
         tt( ""+ppp);
         
         Block r579 = new Block("r579", type.DOUBLE, new long[]{ 5,7,9 } );
@@ -381,20 +379,20 @@ tt("___________ part:");
         for(int k=1;k<=9;k++)
             for(int j=1;j<=7;j++)
                 for(int i=1;i<=5;i++) rrr.put( Double.valueOf( 100*i + 10*j + k ), new int[]{i,j,k});
-        rrr.setPart();
+        rrr.set();
         
         idx = new Index("2:3,2:4,2:5");        
 tt("\n"+idx);        
         Part rr = new Part( r579, idx );
-        rr.getPart();
+        rr.get();
 tt("idx[][]:  "+Index.idx2str( idx.ii ));        
         tt( "############################ "+rr);
         
-        tt( blocks());       
+        tt( cat());       
         tt( "need = "+5*7*9*8);
         
-tt("_______________________________________________end.");
+tt("______________________________________________end.");
     }
-    static void tt(String x){System.out.println( x );}
+    static void tt(String x){System.out.println( x );}static void tt(){tt("");}
 //*/    
 }

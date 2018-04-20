@@ -98,6 +98,6 @@ public class Head
         }
         tt(s); tt(dec); tt("");
     }
-    static void tt(String x){System.out.println( x );}
+    static void tt(String x){System.out.println( x );}static void tt(){tt("");}
 //*/    
 }

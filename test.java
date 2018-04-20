@@ -2,16 +2,16 @@ package com.pik.xmem;
 
 public class test
 {
-    static String lon2str( long v ){ String s=lon2str( v, 10 ); return normLen( s, 13 )+"| len="+s.length();}
-    static String lon2str( long v, int m ){ 
+    static public String lon2str( long v ){ String s=lon2str( v, 10 ); return normLen( s, 13 )+"| len="+s.length();}
+    static public String lon2str( long v, int m ){ 
         String s = (v<0? "":" ")+v;
         int l=s.length(), x=m+1;
         if( l>x ) s = s.substring( 0, x )+"+"+(l-x);
         return s;
     }
     
-    static String dbl2str( double v ){ String s=dbl2str( v, 8 ); return normLen( s, 14 )+"| len="+s.length();}
-    static String dbl2str( double v, int m ){
+    static public String dbl2str( double v ){ String s=dbl2str( v, 10 ); return normLen( s, 16 )+"| len="+s.length();}
+    static public String dbl2str( double v, int m ){
         int w = m+6;
         String s = (v<0? "":" ")+String.format("%"+w+"."+m+"g",v).trim().replace(',','.');
         
@@ -42,14 +42,13 @@ public class test
         return s;
     }
 
-    static private String normLen( String s, int w ){
+    static public String normLen( String s, int w ){
         w -= s.length();
         return w>0? s = s+sp32.substring( 0, w ): s;
     }
     static private final String sp32="                                ";// 32*' '!!!
     
 //==============================================================================DBG:
-    static void tt(String x){System.out.println( x );}static void tt(){tt("");}
 
     public static void main( String[] args ) throws Exception {
         long q = Long.MAX_VALUE; tt(" "+q+" = Long.MAX_VALUE");
@@ -64,5 +63,8 @@ public class test
         d = .1234567; tt(""+dbl2str( d ));
         d = 123.4567; tt(""+dbl2str( d ));
         d = 1234567.; tt(""+dbl2str( d ));
+        
+        float f = Float.MAX_VALUE; tt("FLOAT = "+f); 
     }
+    static void tt(String x){System.out.println( x );}static void tt(){tt("");}
 }

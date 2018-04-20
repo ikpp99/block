@@ -28,13 +28,24 @@ public class Part
         arr = type.creArr( arrtyp, arrlen );
     }
     
-    public void getPart() throws Exception{ blk.part( pp, arr, false );}
-    public void setPart() throws Exception{ blk.part( pp, arr, true  );}
+    public void get() throws Exception{ blk.part( pp, arr, false );}
+    public void set() throws Exception{ blk.part( pp, arr, true  );}
 
     public int arrLoc( int[] ijk ) { // ijk[n] > 0 !!! 
         int loc=ijk[0]-1;
         for(int n=1;n<ijk.length;n++) loc += (ijk[n]-1) * xx[n];
         return loc;
+    }
+    
+    public void fill( Object v ) throws Exception {
+        switch( arrtyp ) {
+            case DOUBLE:  Arrays.fill( (double[])arr, (double) v ); break;
+            case INT   :  Arrays.fill( (int[]   )arr, (int   ) v ); break;
+            case LONG  :  Arrays.fill( (long[]  )arr, (long  ) v ); break;
+            case FLOAT :  Arrays.fill( (float[] )arr, (float ) v ); break;
+            case SHORT :  Arrays.fill( (short[] )arr, (short ) v ); break;
+            case BYTE  :  Arrays.fill( (byte[]  )arr, (byte  ) v );
+        }
     }
 //------------------------------------------------------------------------------
     
@@ -75,14 +86,13 @@ public class Part
     
     public String toString(){
         String s = "\nPart: "+smpInd( pp )+" of "+blk.toString(); p="";
-        int vx = pp.length;
-        vv = new long[vx][2]; for(int i=0;i<vx;i++){ vv[i][0]=pp[i][0]; vv[i][1]=pp[i][1];}
+        vv = Index.copyL2( pp );
         
         i1 = finDD( 0, vv );  i2 = finDD( i1+1, vv );
         if( i1 <0 )  i1=i2=0;
         if( i2 <0 ){ i2=i1; i1=0;}
         
-        par2str( vx-1 );
+        par2str( pp.length - 1 );
         return s+p;
     }
     private String smpInd( long[][] qq ){ return Index.idx2str( qq ).replaceAll(":1","");}
@@ -103,8 +113,8 @@ public class Part
             }
             vv[pv][0] = sav;
         }
-        else {  // pv=i2 ???
-            p+="\n" + partIndex() + partData(); //TODO dbg
+        else {  // pv=i2 !!!
+            p+="\n" + partIndex() + partData();
         }
     }
 
@@ -119,27 +129,24 @@ public class Part
             ij[i1]=i; s+="\n"; 
             for(int j=ijk[i2]; j<ijk[i2]+vv[i2][1]; j++ ){
                 ij[i2]=j;
-//              s+=" "; for(int t=0;t<ij.length;t++) s+=ij[t];
-                s+=" "+getPar( ij );
+//              s+=" "; for(int t=0;t<ij.length;t++) s+=ij[t]; // usefull to debug
+                s+= getPar( ij );
             }
             if( i1==i2 ) break;
         }
         return s;
     }
     
-    
     private String getPar( int[] ijk ){
         int[] ij = new int[ ijk.length ];
         for(int i=0;i<ijk.length;i++)
             ij[i] = ijk[i] - (int)pp[i][0] +1;
-        return " "+get( ij );
+        return obj2str( get( ij ));
     }
     
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++
     
     private String partIndex() {
-//        String s = Index.idx2str( vv );
-//        String s = smpInd( vv );
         String s="[ ";
         for(int i=0; i<vv.length; i++){
             s+=vv[i][0];
@@ -149,18 +156,62 @@ public class Part
         return s.substring( 0, s.length()-2 )+" ]";
     }
     
-    private String objStr( int n ) {
-        Object obj = getObjLoc( n );
+    private String obj2str( Object obj ) {
         switch( arrtyp ) {
-            case DOUBLE:  return ""+(double) obj;
-            case INT   :  return ""+(int   ) obj;
-            case LONG  :  return ""+(long  ) obj;
-            case FLOAT :  return ""+(float ) obj;
-            case SHORT :  return ""+(short ) obj;
-            case BYTE  :  return ""+(byte  ) obj;
+            case DOUBLE:  return normLen( dbl2str( (double) obj, 10 ), 16 );
+            case INT   :  return normLen( lon2str( (int   ) obj, 10 ), 12 );
+            case LONG  :  return normLen( lon2str( (long  ) obj, 10 ), 14 );
+            case FLOAT :  return normLen( dbl2str( (float ) obj,  8 ), 14 );
+            case SHORT :  return normLen( lon2str( (short ) obj,  5 ),  7 );
+            case BYTE  :  return normLen( lon2str( (long  ) obj,  3 ),  5 );
         }
         return null;
     }
+    
+    static public String lon2str( long v, int m ){ 
+        String s = (v<0? "":" ")+v;
+        int l=s.length(), x=m+1;
+        if( l>x ) s = s.substring( 0, x )+"+"+(l-x);
+        return s;
+    }
+    
+    static public String dbl2str( double v, int m ){
+        int w = m+6;
+        String s = (v<0? "":" ")+String.format("%"+w+"."+m+"g",v).trim().replace(',','.');
+        
+        int x = s.indexOf("e"), exp=0;
+        if( x > 0 ) exp = Integer.parseInt( s.substring( x+1 ));
+        
+        if( s.substring( 1,3 ).equals("0.")) s = s.replace("0.",".");
+        
+        if( s.substring( 1,3 ).equals(".0")){
+            int ex=-2, p=2;  x=s.length();
+            while( ++p < x && s.charAt( p )=='0') ex--;
+            if( p<x ){
+                s = s.substring( 0, 1 )+s.charAt( p )+"." +s.substring( p+1 );
+                exp += ex;
+            } else s=" 0";
+            x = -1;
+        }
+        
+        if( x < 0 ) x = s.length();
+        x = x < w-2? x: w-3;
+        s = s.substring( 0, x );
+        
+        x = s.length(); while( --x > 1 && s.charAt( x )=='0'){}
+        s = s.substring( 0, x+1 );
+        if( exp !=0 ) s += (exp>0?"+":"")+exp;
+        else if( s.charAt( s.length()-1 )=='.') s =s.substring( 0, s.length()-1 );
+        
+        return s;
+    }
+
+    static public String normLen( String s, int w ){
+        w -= s.length();
+        return w>0? s = s+sp32.substring( 0, w ): s;
+    }   static private final String sp32="                                ";// 32*' '!!!
+    
+    static Index idx( String s ){ return new Index( s );}
 
 ///* DBG: =====================================================================================================
     
@@ -168,14 +219,14 @@ public class Part
         LongMem mem = new LongMem( 512+1300 + 5*7*9*8 + 30 );  Block.iniBlocks( mem );
         
         Block iii = new Block("iii", type.INT, new long[]{ 5,7,9 } );
-        Part rrr = new Part( iii,new Index("*,*,*"));
+        Part rrr = new Part( iii, idx("*,*,*"));
         for(int k=1;k<=9;k++)
             for(int j=1;j<=7;j++)
                 for(int i=1;i<=5;i++) rrr.put( Integer.valueOf( 100*i + 10*j + k ), new int[]{i,j,k});
-        rrr.setPart(); tt(""+rrr);
+        rrr.set(); tt(""+rrr);
         
         Block qq = new Block("qq",type.INT, new int[]{3,4,5,6}); tt("\n"+ qq );
-        rrr = new Part( qq, new Index("*,*,*,*"));
+        rrr = new Part( qq, idx("*,*,*,*"));
         
         for(int l=1; l<= qq.head.siz[3]; l++)
             for(int k=1; k<= qq.head.siz[2]; k++)
@@ -183,24 +234,43 @@ public class Part
                     for(int i=1; i<= qq.head.siz[0]; i++)
                         rrr.put( Integer.valueOf( 1000*i + 100*j + k*10 + l ), new int[]{i,j,k,l});
         
-        rrr.setPart();
+        rrr.set();
         tt(""+rrr);
         
-        Part  q = new Part( qq, new Index("1:3,2:3,2:4,3:4"));
-        q.getPart();
+        Part  q = new Part( qq, idx("1:3,2:3,2:4,3:4"));
+        q.get();
         tt(""+q);
         
-        Part ww =  new Part( qq, new Index("3,2:3,4:2,2:5"));
+        Part ww =  new Part( qq, idx("3,2:3,4:2,2:5"));
 //        Part ww =  new Part( qq, new Index("3,2:3,4,2:5"));
 //        Part ww =  new Part( qq, new Index("3,2,4,*"));
-        ww =  new Part( qq, new Index("*")); ww.getPart(); tt(""+ww );
-        ww =  new Part( qq, new Index("*,4")); ww.getPart(); tt(""+ww );
-        ww =  new Part( qq, new Index("*,,*")); ww.getPart(); tt(""+ww );
-        ww =  new Part( qq, new Index("3,,*")); ww.getPart(); tt(""+ww );
-        ww =  new Part( qq, new Index(",,*,*")); ww.getPart(); tt(""+ww );
-        ww =  new Part( qq, new Index(",,,*")); ww.getPart(); tt(""+ww );
-        ww =  new Part( qq, new Index(",3,4,5")); ww.getPart(); tt(""+ww );
+        ww =  new Part( qq, idx("*"));      ww.get(); tt(""+ww );
+        ww =  new Part( qq, idx("*,4"));    ww.get(); tt(""+ww );
+        ww =  new Part( qq, idx("*,,*"));   ww.get(); tt(""+ww );
+        ww =  new Part( qq, idx("3,,*"));   ww.get(); tt(""+ww );
+        ww =  new Part( qq, idx(",,*,*"));  ww.get(); tt(""+ww );
+        ww =  new Part( qq, idx(",,,*"));   ww.get(); tt(""+ww );
+        ww =  new Part( qq, idx(",3,4,5")); ww.get(); tt(""+ww );
+        
+        tt( Block.cat());
+        Block q3 = new Block("q3", type.INT, new long[]{5,6,4} );
+        Part pq3 = new Part(  q3, idx("*,*,*"));
+        
+        tt("---------- type = "+ pq3.arrtyp );
+        pq3.fill( -1 );
+        pq3.set(); pq3.get();
+        
+        ww = new Part( q3, idx("2:3, 2:5, 2:3")); ww.fill( 0 ); ww.set(); 
+        pq3.get(); tt( ""+pq3 );
+        
+        pq3.fill( 0 ); pq3.set();
+tt("====================================================================");        
+        
+        qq.copyBB( idx("1:3, 1:4, 1:4"), q3, idx("2, 2, 1") );
+        pq3.get(); tt( ""+pq3 );
+tt("____________________________________________________________________ end.");        
+        
     }
     static void tt(String x){System.out.println( x );}static void tt(){tt("");}
-    //*/        
+ //*/        
 }

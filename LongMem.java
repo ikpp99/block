@@ -148,6 +148,6 @@ public class LongMem
         LMem.copyArr(  cc, rr, GET  );
         s="[]: "; for( double r: rr ) s+=r+", ";  tt( s );
     }
-    static void tt(String x){System.out.println( x );}
+    static void tt(String x){System.out.println( x );}static void tt(){tt("");}
 //*/    
 }

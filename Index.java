@@ -82,18 +82,25 @@ public class Index
     static private HashMap<String,Long> vars;
     
     static public long[][] realIndex( long[][] ind, Head head ) throws Exception {
-        int x = ind.length;
-        long[][] jj = Arrays.copyOf( ind, x );
+
+        long[][] jj = copyL2( ind );
         
-        for(int i=0; i<x; i++){
+        for(int i=0; i<jj.length; i++){
             if( jj[i][0] == -1 ){ jj[i][1] = -1; jj[i][0] = 1; }
             if( jj[i][1] == -1 ){ jj[i][1] = head.siz[i] - jj[i][0]+1;}
 
             if( jj[i][0]<1 || jj[i][0] > head.siz[i]
-            ||  jj[i][1]<1 || jj[i][0] + jj[i][1] -1 > head.siz[i] ) throw new Exception("BAD Index");
-            
+            ||  jj[i][1]<1 || jj[i][0] + jj[i][1] -1 > head.siz[i] )
+                throw new Exception("BAD Index "+(i+1)+": "+(jj[i][0] + jj[i][1]-1)+" > size");
         }
         return jj;
+    }
+    
+    static public long[][] copyL2( long[][] ss ){  // ~Arrays.copyOf
+        int x = ss.length;
+        long[][] dd = new long[x][2];
+        while( x-->0 ){ dd[x][0] = ss[x][0]; dd[x][1] = ss[x][1];} 
+        return dd;
     }
     
     public String toString(){ return idx2str( this.ii );}
