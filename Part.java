@@ -16,7 +16,7 @@ public class Part
     public Part( Block block, long[][] indx ) throws Exception 
     {
         blk=block; pp = Index.realIndex( indx, blk.head );
-        xx = new int[ pp.length ]; Arrays.fill( xx, 1 ); 
+        xx = new int[ pp.length ]; xx[0]=1; 
         arrlen=1;
         for( int i=0; i<pp.length; i++) {
             if( pp[i][0] < 1 || pp[i][1] < 1 || pp[i][0]+pp[i][1]-1 > blk.head.siz[i] )
@@ -49,11 +49,10 @@ public class Part
     }
 //------------------------------------------------------------------------------
     
+    public Object get( int[] ijk ){ return getObjLoc( arrLoc( ijk ));}
     public Object get( int i               ){ return get( new int[]{ i     });} 
     public Object get( int i, int j        ){ return get( new int[]{ i,j   });} 
     public Object get( int i, int j, int k ){ return get( new int[]{ i,j,k });} 
-
-    public Object get( int[] ijk ){ return getObjLoc( arrLoc( ijk ));}
 
     private Object getObjLoc( int loc ){
         switch( arrtyp ) {
@@ -68,10 +67,6 @@ public class Part
     }
 //------------------------------------------------------------------------------
 
-    public void put( Object v, int i               ){ put( v, new int[]{ i     });} 
-    public void put( Object v, int i, int j        ){ put( v, new int[]{ i,j   });} 
-    public void put( Object v, int i, int j, int k ){ put( v, new int[]{ i,j,k });} 
-    
     public void put( Object v, int[] ijk ){
         int loc = arrLoc( ijk );
         switch( arrtyp ) {
@@ -83,7 +78,10 @@ public class Part
             case BYTE  :  ((byte  [])arr)[ loc ] = (byte)   v ;
         }
     }
-    
+    public void put( Object v, int i               ){ put( v, new int[]{ i     });} 
+    public void put( Object v, int i, int j        ){ put( v, new int[]{ i,j   });} 
+    public void put( Object v, int i, int j, int k ){ put( v, new int[]{ i,j,k });} 
+
     public String toString(){
         String s = "\nPart: "+smpInd( pp )+" of "+blk.toString(); p="";
         vv = Index.copyL2( pp );
